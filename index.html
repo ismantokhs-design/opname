@@ -14,6 +14,9 @@
   
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  
+  <!-- HTML5 QR & Barcode Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
 
@@ -96,7 +99,16 @@
         </div>
         <div class="form-group">
           <label>Barcode Barang</label>
-          <input type="text" id="barcode" class="input-control" placeholder="Scan atau ketik barcode..." oninput="cariBarangOtomatis()">
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="barcode" class="input-control" placeholder="Scan atau ketik barcode..." oninput="cariBarangOtomatis()">
+            <!-- Tombol Kamera Scan -->
+            <button class="btn btn-icon-scan" id="btn-camera-scan" onclick="bukaKameraScan()" style="padding: 10px; background: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: none; cursor: pointer;">
+              <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label>Nama Barang</label>
@@ -225,6 +237,23 @@
       </div>
       <div style="margin-top: 16px;">
         <button class="btn btn-secondary btn-sm" onclick="tutupModalDetailLKS()" style="width: 100%;">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Kamera Scan Barcode -->
+  <div id="modal-camera" class="modal-overlay">
+    <div class="modal-card" style="max-width: 420px; width: 95%; padding: 12px;">
+      <div class="modal-header">
+        <h3>Scanner Kamera Barcode</h3>
+        <button class="modal-close" onclick="tutupKameraScan()">&times;</button>
+      </div>
+      <div id="interactive-reader-box" style="position: relative; overflow: hidden; border-radius: 8px; background: #000; width: 100%; aspect-ratio: 4/3; margin-top: 8px;">
+        <div id="interactive" style="width: 100%; height: 100%;"></div>
+      </div>
+      <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+        <p id="scanner-info" style="font-size: 0.8rem; text-align: center; color: var(--text-muted); margin: 0;">Posisikan barcode di dalam kotak kamera.</p>
+        <button class="btn btn-secondary btn-sm" onclick="tutupKameraScan()" style="width: 100%;">Batalkan</button>
       </div>
     </div>
   </div>
