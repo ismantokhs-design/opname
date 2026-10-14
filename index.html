@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Stock Opname PWA</title>
+  
+  <!-- PWA & Mobile Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Opname PWA">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Top App Bar -->
+  <div class="top-bar">
+    <h1 id="page-title">Beranda</h1>
+    <div class="badge-status">
+      <span class="status-dot"></span>
+      <span>Lokal DB</span>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <div class="content">
+
+    <!-- 1. VIEW BERANDA -->
+    <div id="view-beranda" class="view active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="val" id="stat-total-items">0</div>
+          <div class="lbl">Total Item SO</div>
+        </div>
+        <div class="stat-card">
+          <div class="val" id="stat-total-qty">0</div>
+          <div class="lbl">Total QTY Physical</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 12px; font-size: 1rem;">Aksi Cepat</h3>
+        <button class="btn" onclick="switchNav('scan', 'Scan Data')">
+          <svg style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+          Mulai Scan Opname
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. VIEW MASTER BARANG -->
+    <div id="view-master" class="view">
+      <div class="card">
+        <div class="form-group" style="margin-bottom: 0;">
+          <input type="text" id="search-master" class="input-control" placeholder="Cari barcode / nama barang..." onkeyup="filterMasterBarang()">
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <h3 style="font-size: 1rem;">Master Data Barang</h3>
+            <span id="count-master-data" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">0 Item</span>
+          </div>
+          <button class="btn btn-sm" onclick="bukaModalMaster()">+ Tambah Data</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Barcode</th>
+                <th>Nama Barang</th>
+                <th style="text-align: right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-master-barang"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. VIEW SCAN DATA -->
+    <div id="view-scan" class="view">
+      <div class="card">
+        <input type="hidden" id="edit-id-so" value="">
+
+        <div class="form-group">
+          <label>Lokasi / LKS</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="lks" class="input-control" value="" placeholder="Masukkan Kode LKS" onkeydown="handleLksKeydown(event)">
+            <button class="btn btn-sm" onclick="simpanLokasiLKS()" style="white-space: nowrap;">Simpan Lokasi</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Barcode Barang</label>
+          <input type="text" id="barcode" class="input-control" placeholder="Scan atau ketik barcode..." oninput="cariBarangOtomatis()">
+        </div>
+        <div class="form-group">
+          <label>Nama Barang</label>
+          <input type="text" id="nama_barang" class="input-control" placeholder="Nama barang otomatis..." readonly style="background: #f1f5f9;">
+        </div>
+        <div class="form-group">
+          <label>QTY / Jumlah</label>
+          <input type="number" id="qty" class="input-control" value="1" onkeydown="handleQtyKeydown(event)">
+        </div>
+        <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()">+ Simpan Entry</button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 12px; font-size: 0.95rem;">Terakhir Di-input</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px;">No</th>
+                <th>Barcode</th>
+                <th>Nama</th>
+                <th>QTY</th>
+                <th style="text-align: right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-scan-recent"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. VIEW LAPORAN (REKAP PER LOKASI / LKS) -->
+    <div id="view-laporan" class="view">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <h3 style="font-size: 1rem;">Rekap Hasil SO Per Lokasi</h3>
+            <span id="count-rekap-lks" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">0 Lokasi Terdata</span>
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 35px;">No</th>
+                <th>Kode LKS</th>
+                <th>Total Item</th>
+                <th>Total QTY</th>
+                <th style="text-align: right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-laporan-rekap"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. VIEW PENGATURAN -->
+    <div id="view-pengaturan" class="view">
+      <div class="card">
+        <h3 style="margin-bottom: 12px; font-size: 1rem;">Import File Master Data (JSON / TXT)</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+          Pilih file <code>master.json</code> atau file teks <code>master.txt</code> dari HP/Laptop untuk langsung memperbarui master barang.
+        </p>
+        <input type="file" id="file-master" accept=".json,.txt" style="display: none;" onchange="importFileManual(event)">
+        <button class="btn btn-secondary" onclick="document.getElementById('file-master').click()">
+          📁 Upload File Master (.json / .txt)
+        </button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom: 12px; font-size: 1rem;">Sinkronkan File master.json Lokal</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+          Ambil otomatis data dari file <code>master.json</code> yang berada di folder yang sama.
+        </p>
+        <button class="btn btn-secondary" onclick="loadMasterFromJSONFile()">
+          🔄 Auto Sync master.json
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal Popup Tambah/Edit Master Data -->
+  <div id="modal-master" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-master-title">Tambah Master Barang</h3>
+        <button class="modal-close" onclick="tutupModalMaster()">&times;</button>
+      </div>
+      <input type="hidden" id="edit-original-barcode">
+      <div class="form-group">
+        <label>Barcode Barang</label>
+        <input type="text" id="new-barcode" class="input-control" placeholder="Masukkan atau scan barcode">
+      </div>
+      <div class="form-group">
+        <label>Nama Barang</label>
+        <input type="text" id="new-nama-barang" class="input-control" placeholder="Masukkan nama barang">
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-secondary" onclick="tutupModalMaster()">Batal</button>
+        <button class="btn" onclick="simpanMasterBarangBaru()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Detail Rincian Barang Per LKS -->
+  <div id="modal-detail-lks" class="modal-overlay">
+    <div class="modal-card" style="max-width: 460px; width: 95%;">
+      <div class="modal-header">
+        <h3 id="modal-detail-title">Rincian Barang - LKS</h3>
+        <button class="modal-close" onclick="tutupModalDetailLKS()">&times;</button>
+      </div>
+      <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 35px;">No</th>
+              <th>Barcode</th>
+              <th>Nama Barang</th>
+              <th>QTY</th>
+            </tr>
+          </thead>
+          <tbody id="tabel-detail-lks-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top: 16px;">
+        <button class="btn btn-secondary btn-sm" onclick="tutupModalDetailLKS()" style="width: 100%;">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Konfirmasi Custom Elegant -->
+  <div id="modal-confirm" class="modal-overlay">
+    <div class="modal-card" style="text-align: center; max-width: 320px;">
+      <div style="width: 48px; height: 48px; background: #ecfdf5; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+        <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      </div>
+      <h3 style="font-size: 1rem; margin-bottom: 6px;">Simpan & Finalisasi?</h3>
+      <p id="modal-confirm-msg" style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4;">
+        Simpan permanen data scan ke Laporan?
+      </p>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" id="btn-modal-batal" style="flex: 1;">Batal</button>
+        <button class="btn" id="btn-modal-ya" style="flex: 1;">Ya, Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Floating -->
+  <div id="toast" class="toast">
+    <div class="toast-icon" id="toast-icon">✓</div>
+    <div class="toast-message" id="toast-message">Notifikasi</div>
+  </div>
+
+  <!-- Bottom Navigation Bar (5 Items) -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="switchNav('beranda', 'Beranda')">
+      <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Beranda</span>
+    </div>
+
+    <div class="nav-item" onclick="switchNav('master', 'Master Barang')">
+      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <span>Master</span>
+    </div>
+
+    <div class="nav-item fab-item" onclick="switchNav('scan', 'Scan Data')">
+      <div class="fab-button">
+        <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+      </div>
+      <span>Scan</span>
+    </div>
+
+    <div class="nav-item" onclick="switchNav('laporan', 'Laporan')">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Laporan</span>
+    </div>
+
+    <div class="nav-item" onclick="switchNav('pengaturan', 'Pengaturan')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Pengaturan</span>
+    </div>
+  </div>
+
+  <!-- Import Modul JavaScript -->
+  <script src="js/db.js"></script>
+  <script src="js/beranda.js"></script>
+  <script src="js/master.js"></script>
+  <script src="js/scan.js"></script>
+  <script src="js/laporan.js"></script>
+  <script src="js/pengaturan.js"></script>
+  
+  <script>
+    function switchNav(viewId, title) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      document.getElementById(`view-${viewId}`).classList.add('active');
+      document.getElementById('page-title').innerText = title;
+
+      const navIndex = ['beranda', 'master', 'scan', 'laporan', 'pengaturan'].indexOf(viewId);
+      if (navIndex !== -1) {
+        document.querySelectorAll('.nav-item')[navIndex].classList.add('active');
+      }
+
+      if (viewId === 'scan') {
+        setTimeout(() => document.getElementById("lks").focus(), 100);
+      }
+
+      refreshUI();
+    }
+
+    // Register Service Worker untuk Instalasi PWA & Offline Access
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker terdaftar!', reg.scope))
+          .catch(err => console.log('Gagal daftar Service Worker:', err));
+      });
+    }
+  </script>
+</body>
+</html>
