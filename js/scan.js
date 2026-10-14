@@ -1,3 +1,5 @@
+let html5QrScannerInstance = null; // Menyimpan instansi scanner kamera
+
 document.addEventListener("DOMContentLoaded", () => {
   const lksInput = document.getElementById("lks");
   if (lksInput) lksInput.value = "";
@@ -150,7 +152,6 @@ function simpanInputSO() {
   const tx = db.transaction("input_so", "readwrite");
   const store = tx.objectStore("input_so");
 
-  // A. KONDISI UPDATE DATA TERSEDIA
   if (editId) {
     const req = store.get(parseInt(editId));
     req.onsuccess = () => {
@@ -171,9 +172,7 @@ function simpanInputSO() {
       if (barcodeInput) barcodeInput.focus();
       refreshUI();
     };
-  } 
-  // B. KONDISI TAMBAH DATA BARU
-  else {
+  } else {
     store.add({ 
       lks: lks.toUpperCase(), 
       barcode, 
@@ -193,7 +192,6 @@ function simpanInputSO() {
   }
 }
 
-// FUNGSI LEMPAR DATA KE FORM ATAS (MODE EDIT)
 function persiapkanEditSO(id) {
   const tx = db.transaction("input_so", "readonly");
   const store = tx.objectStore("input_so");
@@ -202,20 +200,17 @@ function persiapkanEditSO(id) {
   req.onsuccess = () => {
     const item = req.result;
     if (item) {
-      // 1. Masukkan nilai ke form atas
       document.getElementById("edit-id-so").value = item.id;
       document.getElementById("barcode").value = item.barcode;
       document.getElementById("nama_barang").value = item.nama_barang;
       document.getElementById("qty").value = item.qty;
 
-      // 2. Ubah Tampilan Tombol
       const btnSimpan = document.getElementById("btn-simpan-entry");
       if (btnSimpan) {
         btnSimpan.innerText = "✓ Update Entry";
-        btnSimpan.style.background = "#0284c7"; // Warna biru indikasi edit mode
+        btnSimpan.style.background = "#0284c7";
       }
 
-      // 3. Fokuskan & blok angka QTY agar mudah diganti
       const qtyInput = document.getElementById("qty");
       if (qtyInput) {
         qtyInput.focus();
@@ -227,7 +222,6 @@ function persiapkanEditSO(id) {
   };
 }
 
-// Helper Reset Form ke Kondisi Awal
 function resetFormScan() {
   document.getElementById("edit-id-so").value = "";
   document.getElementById("barcode").value = "";
@@ -237,7 +231,7 @@ function resetFormScan() {
   const btnSimpan = document.getElementById("btn-simpan-entry");
   if (btnSimpan) {
     btnSimpan.innerText = "+ Simpan Entry";
-    btnSimpan.style.background = "var(--primary)"; // Kembali ke warna hijau
+    btnSimpan.style.background = "var(--primary)";
   }
 }
 
@@ -253,4 +247,58 @@ function hapusInputSO(id) {
       refreshUI();
     };
   });
+}
+
+// ==========================================
+// FUNGSI AKSI: SCANNER KAMERA BARCODE
+// ==========================================
+function bukaKameraScan() {
+  const lks = document.getElementById("lks").value.trim();
+  if (!lks) {
+    return showToast("Lokasi / LKS harus diisi dulu!", "error");
+  }
+
+  const modal = document.getElementById("modal-camera");
+  if (modal) modal.classList.add("show");
+
+  if (html5QrScannerInstance) {
+    html5QrScannerInstance.stop().catch(() => {});
+  }
+
+  html5QrScannerInstance = new Html5Qrcode("interactive");
+
+  html5QrScannerInstance.start(
+    { facingMode: "environment" },
+    {
+      fps: 15,
+      qrbox: { width: 260, height: 120 }
+    },
+    (decodedText) => {
+      document.getElementById("barcode").value = decodedText;
+      playBeep();
+      tutupKameraScan();
+
+      cariBarangOtomatis();
+      showToast("Barcode terbaca: " + decodedText, "success");
+    },
+    (errorMessage) => {
+      // Ignore reading errors
+    }
+  ).catch(err => {
+    showToast("Gagal mengakses kamera. Izinkan akses kamera!", "error");
+    tutupKameraScan();
+  });
+}
+
+function tutupKameraScan() {
+  const modal = document.getElementById("modal-camera");
+  if (modal) modal.classList.remove("show");
+
+  if (html5QrScannerInstance) {
+    html5QrScannerInstance.stop().then(() => {
+      html5QrScannerInstance = null;
+    }).catch(() => {
+      html5QrScannerInstance = null;
+    });
+  }
 }
