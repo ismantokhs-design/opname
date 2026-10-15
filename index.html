@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <link rel="stylesheet" href="css/style.css?v=12">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -128,12 +128,22 @@
           <div id="search-nama-results" class="search-dropdown"></div>
         </div>
 
+        <!-- INPUT QTY, TOMBOL SIMPAN, DAN TOMBOL BATAL/RESET MERAH -->
         <div class="form-group" style="margin-bottom: 0;">
           <label>QTY / JUMLAH</label>
-          <div style="display: flex; gap: 5px; align-items: center;">
+          <div style="display: flex; gap: 4px; align-items: center;">
             <input type="number" id="qty" class="input-control" value="1" onkeydown="handleQtyKeydown(event)" style="flex: 1;">
+            
             <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()" style="width: auto; padding: 6px 10px; white-space: nowrap;">
               + Simpan Entry
+            </button>
+
+            <!-- Tombol Batal Warna Merah -->
+            <button class="btn" id="btn-batal-entry" onclick="batalInputForm()" title="Reset Form" style="width: 32px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+              <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -343,7 +353,7 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=10"></script>
+  <script src="js/scan.js?v=12"></script>
   <script src="js/laporan.js"></script>
   <script src="js/pengaturan.js"></script>
   
