@@ -46,6 +46,10 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.top-bar.hide-on-scan {
+  display: none !important;
+}
+
 .top-bar h1 {
   font-size: 0.875rem;
   font-weight: 700;
@@ -73,7 +77,7 @@ body {
 
 /* Layout Content Area */
 .content {
-  padding: 8px;
+  padding: 4px 8px 8px 8px; /* Padding atas sangat rapat */
   max-width: 480px;
   margin: 0 auto;
 }
@@ -149,12 +153,12 @@ body {
 }
 
 .search-item {
-  padding: 8px 10px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .search-item:hover, .search-item:active {
@@ -168,11 +172,11 @@ body {
 .search-item .item-nama {
   font-weight: 600;
   color: var(--text-main);
-  font-size: 0.73rem;
+  font-size: 0.68rem;
 }
 
 .search-item .item-barcode {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-muted);
   font-family: monospace;
 }
@@ -207,12 +211,12 @@ body {
 }
 
 .btn-sm {
-  padding: 4px 8px;
-  font-size: 0.7rem;
+  padding: 3px 6px;
+  font-size: 0.65rem;
   width: auto;
 }
 
-/* Table Ringkas */
+/* TABEL EKSTRA COMPACT & RINGKAS */
 .table-container {
   overflow-x: auto;
   border-radius: 6px;
@@ -220,7 +224,7 @@ body {
 }
 
 #view-master .table-container {
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
 }
 
@@ -228,11 +232,11 @@ table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
 }
 
 th, td {
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -240,8 +244,17 @@ th {
   background: #f8fafc;
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+td {
+  font-size: 0.65rem;
+}
+
+td b, td strong {
+  font-weight: 600;
 }
 
 tr:last-child td {
@@ -250,19 +263,24 @@ tr:last-child td {
 
 .action-btn-group {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   justify-content: flex-end;
 }
 
 .btn-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 4px;
   border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.btn-icon svg {
+  width: 12px;
+  height: 12px;
 }
 
 .btn-icon.edit { background: #e0f2fe; color: #0284c7; }
