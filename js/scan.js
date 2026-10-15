@@ -2,7 +2,14 @@ let html5QrScannerInstance = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const lksInput = document.getElementById("lks");
-  if (lksInput) lksInput.value = "";
+  if (lksInput) {
+    lksInput.value = "";
+    
+    // Pengecekan otomatis saat kursor keluar dari kolom LOKASI (blur)
+    lksInput.addEventListener("blur", () => {
+      cekLokasiDiLaporan();
+    });
+  }
 
   // Sembunyikan dropdown jika mengklik di luar area input nama barang
   document.addEventListener("click", (e) => {
@@ -15,6 +22,61 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// Pengecekan Apakah Kode Lokasi Sudah Ada di Laporan
+function cekLokasiDiLaporan() {
+  const lksInput = document.getElementById("lks");
+  if (!lksInput || !db) return;
+
+  const currentLKS = lksInput.value.trim().toUpperCase();
+  if (!currentLKS) return;
+
+  const tx = db.transaction("input_so", "readonly");
+  const store = tx.objectStore("input_so");
+  const req = store.getAll();
+
+  req.onsuccess = () => {
+    const allData = req.result || [];
+    const dataSaved = allData.filter(item => {
+      const itemLKS = item.lks ? String(item.lks).trim().toUpperCase() : "";
+      return itemLKS === currentLKS && item.status === "saved";
+    });
+
+    // Jika lokasi sudah tersimpan di Laporan, tampilkan dialog konfirmasi
+    if (dataSaved.length > 0) {
+      showCustomConfirm({
+        title: `Lokasi ${currentLKS} Sudah Ada!`,
+        msg: `Data lokasi ${currentLKS} sudah tersimpan di Laporan (${dataSaved.length} item). Ingin lanjut edit data ini?`,
+        iconType: "save",
+        btnConfirmText: "Lanjut (Edit)",
+        onConfirm: () => {
+          // Ubah status data di laporan kembali ke 'active'
+          const txUpdate = db.transaction(["input_so"], "readwrite");
+          const storeUpdate = txUpdate.objectStore("input_so");
+
+          dataSaved.forEach(item => {
+            item.status = "active";
+            storeUpdate.put(item);
+          });
+
+          txUpdate.oncomplete = () => {
+            showToast(`Data Lokasi ${currentLKS} dibuka kembali untuk diedit!`, "success");
+            refreshUI();
+            const barcodeInput = document.getElementById("barcode");
+            if (barcodeInput) barcodeInput.focus();
+          };
+        },
+        onCancel: () => {
+          // Batal: Kosongkan kolom lokasi & kembalikan kursor ke LOKASI
+          lksInput.value = "";
+          resetFormScan();
+          refreshUI();
+          setTimeout(() => lksInput.focus(), 100);
+        }
+      });
+    }
+  };
+}
 
 function handleLksKeydown(event) {
   if (event.key === "Enter") {
@@ -123,7 +185,7 @@ function simpanLokasiLKS() {
     const allData = req.result || [];
     
     const dataLKS = allData.filter(item => {
-      const itemLKS = item.lks ? item.lks.toString().trim().toUpperCase() : "";
+      const itemLKS = item.lks ? String(item.lks).trim().toUpperCase() : "";
       return itemLKS === currentLKS && item.status !== "saved";
     });
 
@@ -170,7 +232,7 @@ function renderScanUI() {
     const data = reqSO.result || [];
 
     const filteredData = data.filter(item => {
-      const itemLKS = item.lks ? item.lks.toString().trim().toUpperCase() : "";
+      const itemLKS = item.lks ? String(item.lks).trim().toUpperCase() : "";
       return itemLKS === currentLKS && item.status !== "saved";
     });
 
@@ -216,7 +278,7 @@ function cariBarangOtomatis() {
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
 
-      // Focus ke kolom QTY setelah barcode dikenali
+      // Focus ke kolom QTY setelah barcode ditemukan
       const qtyInput = document.getElementById("qty");
       if (qtyInput) {
         qtyInput.focus();
@@ -318,7 +380,7 @@ function persiapkanEditSO(id) {
   };
 }
 
-// Tombol (X): Hapus Semua Data dengan Kode Lokasi yang Aktif
+// Tombol (X): Hapus Semua Data Scan dengan Kode Lokasi yang Aktif
 function batalInputForm() {
   const lksInput = document.getElementById("lks");
   const currentLKS = lksInput ? lksInput.value.trim().toUpperCase() : "";
@@ -336,8 +398,9 @@ function batalInputForm() {
 
   req.onsuccess = () => {
     const allData = req.result || [];
+    
     const itemsDiLokasi = allData.filter(item => {
-      const itemLKS = item.lks ? item.lks.toString().trim().toUpperCase() : "";
+      const itemLKS = item.lks ? String(item.lks).trim().toUpperCase() : "";
       return itemLKS === currentLKS && item.status !== "saved";
     });
 
@@ -350,7 +413,7 @@ function batalInputForm() {
 
     showCustomConfirm({
       title: `Hapus Data Lokasi ${currentLKS}?`,
-      msg: `Yakin ingin menghapus seluruh ${itemsDiLokasi.length} data scan di lokasi ${currentLKS}?`,
+      msg: `Yakin ingin menghapus seluruh ${itemsDiLokasi.length} item scan di lokasi ${currentLKS}?`,
       iconType: "trash",
       btnConfirmText: "Ya, Hapus Semua",
       btnConfirmClass: "btn-danger",
@@ -366,7 +429,10 @@ function batalInputForm() {
           resetFormScan();
           showToast(`Seluruh data di Lokasi ${currentLKS} berhasil dihapus!`, "success");
           refreshUI();
-          if (lksInput) lksInput.focus();
+          if (lksInput) {
+            lksInput.value = "";
+            lksInput.focus();
+          }
         };
       }
     });
@@ -409,7 +475,7 @@ function hapusInputSO(id) {
   });
 }
 
-// Modal Konfirmasi Custom Fleksibel & Dinamis
+// Modal Konfirmasi Custom Fleksibel & Dinamis (Mendukung Handler Cancel)
 function showCustomConfirm(options) {
   const modal = document.getElementById("modal-confirm");
   if (!modal) return;
@@ -456,10 +522,11 @@ function showCustomConfirm(options) {
 
   btnBatal.onclick = () => {
     modal.classList.remove("show");
+    if (typeof options.onCancel === "function") options.onCancel();
   };
 }
 
-// FUNGSI PERBAIKAN TOTAL KAMERA SCAN
+// Buka Kamera Scan
 function bukaKameraScan() {
   const lks = document.getElementById("lks").value.trim();
   if (!lks) {
