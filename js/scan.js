@@ -72,12 +72,10 @@ function cariBarangByNamaManual() {
   req.onsuccess = () => {
     const allItems = req.result || [];
     
-    // Filter mengandung kata kunci
     let matches = allItems.filter(item => 
       item.nama_barang && item.nama_barang.toLowerCase().includes(keyword)
     );
 
-    // Urutkan A-Z berdasarkan nama_barang
     matches.sort((a, b) => a.nama_barang.localeCompare(b.nama_barang));
 
     if (matches.length === 0) {
@@ -411,7 +409,7 @@ function showCustomConfirm(options) {
   };
 }
 
-// Buka Kamera dengan Penanganan Instance Aman
+// FUNGSI PERBAIKAN TOTAL KAMERA SCAN
 function bukaKameraScan() {
   const lks = document.getElementById("lks").value.trim();
   if (!lks) {
@@ -421,16 +419,27 @@ function bukaKameraScan() {
   const modal = document.getElementById("modal-camera");
   if (modal) modal.classList.add("show");
 
+  // Jika ada scanner aktif, stop & bersihkan container DOM terlebih dahulu
   if (html5QrScannerInstance) {
     html5QrScannerInstance.stop().then(() => {
       html5QrScannerInstance = null;
+      bersihkanContainerKamera();
       mulaikanScanner();
     }).catch(() => {
       html5QrScannerInstance = null;
+      bersihkanContainerKamera();
       mulaikanScanner();
     });
   } else {
+    bersihkanContainerKamera();
     mulaikanScanner();
+  }
+}
+
+function bersihkanContainerKamera() {
+  const container = document.getElementById("interactive");
+  if (container) {
+    container.innerHTML = "";
   }
 }
 
@@ -453,7 +462,7 @@ function mulaikanScanner() {
         showToast("Barcode terbaca: " + decodedText, "success");
       },
       (errorMessage) => {
-        // Ignored frame scan errors
+        // Abaikan error per-frame scanning biasa
       }
     ).catch(err => {
       console.error("Kamera error:", err);
@@ -474,8 +483,12 @@ function tutupKameraScan() {
   if (html5QrScannerInstance) {
     html5QrScannerInstance.stop().then(() => {
       html5QrScannerInstance = null;
+      bersihkanContainerKamera();
     }).catch(() => {
       html5QrScannerInstance = null;
+      bersihkanContainerKamera();
     });
+  } else {
+    bersihkanContainerKamera();
   }
 }
