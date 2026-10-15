@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=5">
+  <link rel="stylesheet" href="css/style.css?v=10">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -33,6 +33,11 @@
 
     <!-- 1. VIEW BERANDA -->
     <div id="view-beranda" class="view active">
+      <!-- LOGO WALL.PNG CENTER DI ATAS BERANDA -->
+      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px; padding: 4px 0;">
+        <img src="wall.png" alt="Swalayan Maga Logo" style="max-width: 160px; width: 50%; height: auto; opacity: 0.95; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
+      </div>
+
       <div class="stats-grid">
         <div class="stat-card">
           <div class="val" id="stat-total-items">0</div>
@@ -62,12 +67,9 @@
       </div>
 
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <div>
-            <h3 style="font-size: 0.8rem; font-weight: 600;">Master Data Barang</h3>
-            <span id="count-master-data" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">0 Item</span>
-          </div>
-          <button class="btn btn-sm" onclick="bukaModalMaster()">+ Tambah Data</button>
+        <div style="margin-bottom: 10px;">
+          <h3 style="font-size: 0.8rem; font-weight: 600;">Master Data Barang</h3>
+          <span id="count-master-data" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">0 Item</span>
         </div>
         <div class="table-container">
           <table>
@@ -90,9 +92,9 @@
         <input type="hidden" id="edit-id-so" value="">
 
         <div class="form-group">
-          <label>Lokasi / LKS</label>
+          <label>LOKASI</label>
           <div style="display: flex; gap: 5px;">
-            <input type="text" id="lks" class="input-control" value="" placeholder="Masukkan Kode LKS" onkeydown="handleLksKeydown(event)">
+            <input type="text" id="lks" class="input-control" value="" placeholder="Masukkan Kode Lokasi" onkeydown="handleLksKeydown(event)">
             <button class="btn btn-sm" onclick="simpanLokasiLKS()" style="white-space: nowrap;">Simpan Lokasi</button>
           </div>
         </div>
@@ -110,9 +112,20 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <!-- KOLOM NAMA BARANG DENGAN TOMBOL CARI & DROPDOWN RESULT -->
+        <div class="form-group" style="position: relative;">
           <label>Nama Barang</label>
-          <input type="text" id="nama_barang" class="input-control" placeholder="Nama barang otomatis..." readonly style="background: #f8fafc; color: var(--text-muted);">
+          <div style="display: flex; gap: 5px; align-items: center;">
+            <input type="text" id="nama_barang" class="input-control" placeholder="Nama barang otomatis / ketik untuk cari..." readonly onkeyup="cariBarangByNamaManual()" style="background: #f8fafc; color: var(--text-muted); flex: 1;">
+            <button type="button" id="btn-unlock-nama" onclick="toggleCariNama()" title="Cari berdasarkan nama" style="width: 32px; height: 29px; background: #059669; color: white; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+              <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          </div>
+          <!-- DROPDOWN PENCARIAN NAMA BARANG -->
+          <div id="search-nama-results" class="search-dropdown"></div>
         </div>
 
         <div class="form-group" style="margin-bottom: 0;">
@@ -145,7 +158,7 @@
       </div>
     </div>
 
-    <!-- 4. VIEW LAPORAN (REKAP PER LOKASI / LKS) -->
+    <!-- 4. VIEW LAPORAN (REKAP PER LOKASI) -->
     <div id="view-laporan" class="view">
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -159,7 +172,7 @@
             <thead>
               <tr>
                 <th style="width: 28px;">No</th>
-                <th>Kode LKS</th>
+                <th>Kode Lokasi</th>
                 <th>Total Item</th>
                 <th>Total QTY</th>
                 <th style="text-align: right;">Aksi</th>
@@ -194,7 +207,7 @@
         </button>
       </div>
 
-      <!-- KARTU COPYRIGHT OPSI B -->
+      <!-- KARTU COPYRIGHT -->
       <div class="card" style="text-align: center; background: transparent; border: none; box-shadow: none; margin-top: 16px; padding: 8px;">
         <p style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600;">
           Stock Opname PWA v1.0
@@ -230,11 +243,11 @@
     </div>
   </div>
 
-  <!-- Modal Detail Rincian Barang Per LKS -->
+  <!-- Modal Detail Rincian Barang Per Lokasi -->
   <div id="modal-detail-lks" class="modal-overlay">
     <div class="modal-card" style="max-width: 360px; width: 95%;">
       <div class="modal-header">
-        <h3 id="modal-detail-title" style="font-size: 0.85rem;">Rincian Barang - LKS</h3>
+        <h3 id="modal-detail-title" style="font-size: 0.85rem;">Rincian Barang - Lokasi</h3>
         <button class="modal-close" onclick="tutupModalDetailLKS()">&times;</button>
       </div>
       <div class="table-container" style="max-height: 220px; overflow-y: auto;">
@@ -330,7 +343,7 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=5"></script>
+  <script src="js/scan.js?v=10"></script>
   <script src="js/laporan.js"></script>
   <script src="js/pengaturan.js"></script>
   
