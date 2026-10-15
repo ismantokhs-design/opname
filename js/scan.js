@@ -1,389 +1,481 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Stock Opname PWA</title>
+let html5QrScannerInstance = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const lksInput = document.getElementById("lks");
+  if (lksInput) lksInput.value = "";
+
+  // Sembunyikan dropdown jika mengklik di luar area input nama barang
+  document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("search-nama-results");
+    const inputNama = document.getElementById("nama_barang");
+    const btnUnlock = document.getElementById("btn-unlock-nama");
+
+    if (dropdown && !dropdown.contains(e.target) && e.target !== inputNama && e.target !== btnUnlock) {
+      dropdown.classList.remove("show");
+    }
+  });
+});
+
+function handleLksKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const barcodeInput = document.getElementById("barcode");
+    if (barcodeInput) barcodeInput.focus();
+  }
+}
+
+// Buka/Tutup Mode Pencarian Nama Barang
+function toggleCariNama() {
+  const inputNama = document.getElementById("nama_barang");
+  const btnUnlock = document.getElementById("btn-unlock-nama");
+
+  if (inputNama.readOnly) {
+    inputNama.readOnly = false;
+    inputNama.style.background = "#ffffff";
+    inputNama.style.color = "var(--text-main)";
+    btnUnlock.style.background = "#dc2626"; // Berubah merah (Cancel)
+    inputNama.focus();
+    cariBarangByNamaManual();
+  } else {
+    kunciInputNama();
+  }
+}
+
+function kunciInputNama() {
+  const inputNama = document.getElementById("nama_barang");
+  const btnUnlock = document.getElementById("btn-unlock-nama");
+  const dropdown = document.getElementById("search-nama-results");
+
+  inputNama.readOnly = true;
+  inputNama.style.background = "#f8fafc";
+  inputNama.style.color = "var(--text-muted)";
+  btnUnlock.style.background = "#059669"; // Berubah hijau (Search)
+  if (dropdown) dropdown.classList.remove("show");
+}
+
+// Pencarian Barang berdasarkan Nama (A-Z & Contains)
+function cariBarangByNamaManual() {
+  const keyword = document.getElementById("nama_barang").value.trim().toLowerCase();
+  const dropdown = document.getElementById("search-nama-results");
+
+  if (!dropdown) return;
+  if (!keyword) {
+    dropdown.classList.remove("show");
+    dropdown.innerHTML = "";
+    return;
+  }
+
+  const tx = db.transaction("master_barang", "readonly");
+  const store = tx.objectStore("master_barang");
+  const req = store.getAll();
+
+  req.onsuccess = () => {
+    const allItems = req.result || [];
+    
+    // Filter mengandung kata kunci
+    let matches = allItems.filter(item => 
+      item.nama_barang && item.nama_barang.toLowerCase().includes(keyword)
+    );
+
+    // Urutkan A-Z berdasarkan nama_barang
+    matches.sort((a, b) => a.nama_barang.localeCompare(b.nama_barang));
+
+    if (matches.length === 0) {
+      dropdown.innerHTML = `<div style="padding: 8px 10px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">Tidak ada barang yang cocok</div>`;
+    } else {
+      dropdown.innerHTML = matches.slice(0, 30).map(item => `
+        <div class="search-item" onclick="pilihBarangDariNama('${item.barcode}', '${item.nama_barang.replace(/'/g, "\\'")}')">
+          <span class="item-nama">${item.nama_barang}</span>
+          <span class="item-barcode">Barcode: ${item.barcode}</span>
+        </div>
+      `).join('');
+    }
+
+    dropdown.classList.add("show");
+  };
+}
+
+// Handler Saat Item Hasil Pencarian Diklik
+function pilihBarangDariNama(barcode, namaBarang) {
+  document.getElementById("barcode").value = barcode;
+  document.getElementById("nama_barang").value = namaBarang;
   
-  <!-- PWA & Mobile Meta Tags -->
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#059669">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Opname PWA">
-  
-  <link rel="stylesheet" href="css/style.css?v=12">
-  
-  <!-- HTML5 QR & Barcode Scanner Library -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-</head>
-<body>
+  playBeep();
+  kunciInputNama();
 
-  <!-- Top App Bar -->
-  <div class="top-bar">
-    <h1 id="page-title">Beranda</h1>
-    <div class="badge-status">
-      <span class="status-dot"></span>
-      <span>Lokal DB</span>
-    </div>
-  </div>
+  const qtyInput = document.getElementById("qty");
+  if (qtyInput) {
+    qtyInput.focus();
+    qtyInput.select();
+  }
+}
 
-  <!-- Main Content Container -->
-  <div class="content">
+function simpanLokasiLKS() {
+  const lksInput = document.getElementById("lks");
+  const currentLKS = lksInput ? lksInput.value.trim().toUpperCase() : "";
 
-    <!-- 1. VIEW BERANDA -->
-    <div id="view-beranda" class="view active">
-      <!-- LOGO WALL.PNG CENTER DI ATAS BERANDA -->
-      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px; padding: 4px 0;">
-        <img src="wall.png" alt="Swalayan Maga Logo" style="max-width: 160px; width: 50%; height: auto; opacity: 0.95; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
-      </div>
+  if (!currentLKS) return showToast("Kode Lokasi tidak boleh kosong!", "error");
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="val" id="stat-total-items">0</div>
-          <div class="lbl">Total Item SO</div>
-        </div>
-        <div class="stat-card">
-          <div class="val" id="stat-total-qty">0</div>
-          <div class="lbl">Total QTY Physical</div>
-        </div>
-      </div>
+  const tx = db.transaction(["input_so"], "readwrite");
+  const store = tx.objectStore("input_so");
+  const req = store.getAll();
 
-      <div class="card">
-        <h3 style="margin-bottom: 8px; font-size: 0.8rem; font-weight: 600;">Aksi Cepat</h3>
-        <button class="btn" onclick="switchNav('scan', 'Scan Data')">
-          <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
-          Mulai Scan Opname
-        </button>
-      </div>
-    </div>
+  req.onsuccess = () => {
+    const allData = req.result || [];
+    
+    const dataLKS = allData.filter(item => {
+      const itemLKS = item.lks ? item.lks.toString().trim().toUpperCase() : "";
+      return itemLKS === currentLKS && item.status !== "saved";
+    });
 
-    <!-- 2. VIEW MASTER BARANG -->
-    <div id="view-master" class="view">
-      <div class="card">
-        <div class="form-group" style="margin-bottom: 0;">
-          <input type="text" id="search-master" class="input-control" placeholder="Cari barcode / nama barang..." onkeyup="filterMasterBarang()">
-        </div>
-      </div>
+    if (dataLKS.length === 0) {
+      return showToast(`Tidak ada data scan aktif di ${currentLKS} untuk disimpan!`, "error");
+    }
 
-      <div class="card">
-        <div style="margin-bottom: 10px;">
-          <h3 style="font-size: 0.8rem; font-weight: 600;">Master Data Barang</h3>
-          <span id="count-master-data" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">0 Item</span>
-        </div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Barcode</th>
-                <th>Nama Barang</th>
-                <th style="text-align: right;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="tabel-master-barang"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    showCustomConfirm({
+      title: "Simpan & Finalisasi?",
+      msg: `Simpan permanen ${dataLKS.length} item dari ${currentLKS} ke Laporan dan bersihkan tabel scan?`,
+      iconType: "save",
+      btnConfirmText: "Ya, Simpan",
+      onConfirm: () => {
+        const txUpdate = db.transaction(["input_so"], "readwrite");
+        const storeUpdate = txUpdate.objectStore("input_so");
 
-    <!-- 3. VIEW SCAN DATA -->
-    <div id="view-scan" class="view">
-      <div class="card">
-        <input type="hidden" id="edit-id-so" value="">
+        dataLKS.forEach(item => {
+          item.status = "saved";
+          storeUpdate.put(item);
+        });
 
-        <div class="form-group">
-          <label>LOKASI</label>
-          <div style="display: flex; gap: 5px;">
-            <input type="text" id="lks" class="input-control" value="" placeholder="Masukkan Kode Lokasi" onkeydown="handleLksKeydown(event)">
-            <button class="btn btn-sm" onclick="simpanLokasiLKS()" style="white-space: nowrap;">Simpan Lokasi</button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Barcode Barang</label>
-          <div style="display: flex; gap: 5px; align-items: center;">
-            <input type="text" id="barcode" class="input-control" placeholder="Scan / ketik barcode..." oninput="cariBarangOtomatis()" style="flex: 1;">
-            <button type="button" id="btn-camera-scan" onclick="bukaKameraScan()" style="width: 32px; height: 29px; background: #2563eb !important; color: white !important; border: none; border-radius: 6px; display: flex !important; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
-              <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- KOLOM NAMA BARANG DENGAN TOMBOL CARI & DROPDOWN RESULT -->
-        <div class="form-group" style="position: relative;">
-          <label>Nama Barang</label>
-          <div style="display: flex; gap: 5px; align-items: center;">
-            <input type="text" id="nama_barang" class="input-control" placeholder="Nama barang otomatis / ketik untuk cari..." readonly onkeyup="cariBarangByNamaManual()" style="background: #f8fafc; color: var(--text-muted); flex: 1;">
-            <button type="button" id="btn-unlock-nama" onclick="toggleCariNama()" title="Cari berdasarkan nama" style="width: 32px; height: 29px; background: #059669; color: white; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
-              <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
-          </div>
-          <!-- DROPDOWN PENCARIAN NAMA BARANG -->
-          <div id="search-nama-results" class="search-dropdown"></div>
-        </div>
-
-        <!-- INPUT QTY, TOMBOL SIMPAN, DAN TOMBOL BATAL/RESET MERAH -->
-        <div class="form-group" style="margin-bottom: 0;">
-          <label>QTY / JUMLAH</label>
-          <div style="display: flex; gap: 4px; align-items: center;">
-            <input type="number" id="qty" class="input-control" value="1" onkeydown="handleQtyKeydown(event)" style="flex: 1;">
-            
-            <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()" style="width: auto; padding: 6px 10px; white-space: nowrap;">
-              + Simpan Entry
-            </button>
-
-            <!-- Tombol Batal Warna Merah -->
-            <button class="btn" id="btn-batal-entry" onclick="batalInputForm()" title="Reset Form" style="width: 32px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
-              <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="margin-bottom: 8px; font-size: 0.8rem; font-weight: 600;">Terakhir Di-input</h3>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 30px;">No</th>
-                <th>Barcode</th>
-                <th>Nama</th>
-                <th>QTY</th>
-                <th style="text-align: right;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="tabel-scan-recent"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4. VIEW LAPORAN (REKAP PER LOKASI) -->
-    <div id="view-laporan" class="view">
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <div>
-            <h3 style="font-size: 0.8rem; font-weight: 600;">Rekap Hasil SO Per Lokasi</h3>
-            <span id="count-rekap-lks" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">0 Lokasi Terdata</span>
-          </div>
-        </div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 28px;">No</th>
-                <th>Kode Lokasi</th>
-                <th>Total Item</th>
-                <th>Total QTY</th>
-                <th style="text-align: right;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="tabel-laporan-rekap"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- 5. VIEW PENGATURAN -->
-    <div id="view-pengaturan" class="view">
-      <div class="card">
-        <h3 style="margin-bottom: 6px; font-size: 0.8rem; font-weight: 600;">Import File Master Data (JSON / TXT)</h3>
-        <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.35;">
-          Pilih file <code>master.json</code> atau file teks <code>master.txt</code> dari HP/Laptop untuk memperbarui master barang.
-        </p>
-        <input type="file" id="file-master" accept=".json,.txt" style="display: none;" onchange="importFileManual(event)">
-        <button class="btn btn-secondary" onclick="document.getElementById('file-master').click()">
-          📁 Upload File Master (.json / .txt)
-        </button>
-      </div>
-
-      <div class="card">
-        <h3 style="margin-bottom: 6px; font-size: 0.8rem; font-weight: 600;">Sinkronkan File master.json Lokal</h3>
-        <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.35;">
-          Ambil otomatis data dari file <code>master.json</code> yang berada di folder proyek.
-        </p>
-        <button class="btn btn-secondary" onclick="loadMasterFromJSONFile()">
-          🔄 Auto Sync master.json
-        </button>
-      </div>
-
-      <!-- KARTU COPYRIGHT -->
-      <div class="card" style="text-align: center; background: transparent; border: none; box-shadow: none; margin-top: 16px; padding: 8px;">
-        <p style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600;">
-          Stock Opname PWA v1.0
-        </p>
-        <p style="font-size: 0.62rem; color: var(--text-muted); margin-top: 2px;">
-          © 2026 This-Application. All rights reserved.
-        </p>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Modal Popup Tambah/Edit Master Data -->
-  <div id="modal-master" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="modal-master-title" style="font-size: 0.85rem;">Tambah Master Barang</h3>
-        <button class="modal-close" onclick="tutupModalMaster()">&times;</button>
-      </div>
-      <input type="hidden" id="edit-original-barcode">
-      <div class="form-group">
-        <label>Barcode Barang</label>
-        <input type="text" id="new-barcode" class="input-control" placeholder="Masukkan atau scan barcode">
-      </div>
-      <div class="form-group">
-        <label>Nama Barang</label>
-        <input type="text" id="new-nama-barang" class="input-control" placeholder="Masukkan nama barang">
-      </div>
-      <div style="display: flex; gap: 6px; margin-top: 12px;">
-        <button class="btn btn-secondary" onclick="tutupModalMaster()">Batal</button>
-        <button class="btn" onclick="simpanMasterBarangBaru()">Simpan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Detail Rincian Barang Per Lokasi -->
-  <div id="modal-detail-lks" class="modal-overlay">
-    <div class="modal-card" style="max-width: 360px; width: 95%;">
-      <div class="modal-header">
-        <h3 id="modal-detail-title" style="font-size: 0.85rem;">Rincian Barang - Lokasi</h3>
-        <button class="modal-close" onclick="tutupModalDetailLKS()">&times;</button>
-      </div>
-      <div class="table-container" style="max-height: 220px; overflow-y: auto;">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 28px;">No</th>
-              <th>Barcode</th>
-              <th>Nama Barang</th>
-              <th>QTY</th>
-            </tr>
-          </thead>
-          <tbody id="tabel-detail-lks-body"></tbody>
-        </table>
-      </div>
-      <div style="margin-top: 10px;">
-        <button class="btn btn-secondary btn-sm" onclick="tutupModalDetailLKS()" style="width: 100%;">Tutup</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Kamera Scan Barcode -->
-  <div id="modal-camera" class="modal-overlay">
-    <div class="modal-card" style="max-width: 320px; width: 95%; padding: 10px;">
-      <div class="modal-header">
-        <h3 style="font-size: 0.8rem;">Scanner Kamera Barcode</h3>
-        <button class="modal-close" onclick="tutupKameraScan()">&times;</button>
-      </div>
-      <div id="interactive-reader-box" style="position: relative; overflow: hidden; border-radius: 6px; background: #000; width: 100%; aspect-ratio: 4/3; margin-top: 4px;">
-        <div id="interactive" style="width: 100%; height: 100%;"></div>
-      </div>
-      <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 5px;">
-        <p id="scanner-info" style="font-size: 0.68rem; text-align: center; color: var(--text-muted); margin: 0;">Posisikan barcode di dalam kotak kamera.</p>
-        <button class="btn btn-secondary btn-sm" onclick="tutupKameraScan()" style="width: 100%;">Batalkan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Konfirmasi Custom Elegant -->
-  <div id="modal-confirm" class="modal-overlay">
-    <div class="modal-card" style="text-align: center; max-width: 280px;">
-      <div style="width: 36px; height: 36px; background: #ecfdf5; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto;">
-        <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      </div>
-      <h3 style="font-size: 0.85rem; margin-bottom: 3px;">Simpan & Finalisasi?</h3>
-      <p id="modal-confirm-msg" style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.35;">
-        Simpan permanen data scan ke Laporan?
-      </p>
-      <div style="display: flex; gap: 6px;">
-        <button class="btn btn-secondary" id="btn-modal-batal" style="flex: 1;">Batal</button>
-        <button class="btn" id="btn-modal-ya" style="flex: 1;">Ya, Simpan</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification Floating -->
-  <div id="toast" class="toast">
-    <div class="toast-icon" id="toast-icon">✓</div>
-    <div class="toast-message" id="toast-message">Notifikasi</div>
-  </div>
-
-  <!-- Bottom Navigation Bar (5 Items) -->
-  <div class="bottom-nav">
-    <div class="nav-item active" onclick="switchNav('beranda', 'Beranda')">
-      <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <span>Beranda</span>
-    </div>
-
-    <div class="nav-item" onclick="switchNav('master', 'Master Barang')">
-      <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-      <span>Master</span>
-    </div>
-
-    <div class="nav-item fab-item" onclick="switchNav('scan', 'Scan Data')">
-      <div class="fab-button">
-        <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
-      </div>
-      <span>Scan</span>
-    </div>
-
-    <div class="nav-item" onclick="switchNav('laporan', 'Laporan')">
-      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <span>Laporan</span>
-    </div>
-
-    <div class="nav-item" onclick="switchNav('pengaturan', 'Pengaturan')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span>Pengaturan</span>
-    </div>
-  </div>
-
-  <!-- Import Modul JavaScript -->
-  <script src="js/db.js"></script>
-  <script src="js/beranda.js"></script>
-  <script src="js/master.js"></script>
-  <script src="js/scan.js?v=12"></script>
-  <script src="js/laporan.js"></script>
-  <script src="js/pengaturan.js"></script>
-  
-  <script>
-    function switchNav(viewId, title) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-      document.getElementById(`view-${viewId}`).classList.add('active');
-      document.getElementById('page-title').innerText = title;
-
-      const navIndex = ['beranda', 'master', 'scan', 'laporan', 'pengaturan'].indexOf(viewId);
-      if (navIndex !== -1) {
-        document.querySelectorAll('.nav-item')[navIndex].classList.add('active');
+        txUpdate.oncomplete = () => {
+          resetFormScan();
+          if (lksInput) lksInput.value = "";
+          showToast(`Data ${currentLKS} berhasil disimpan ke Laporan!`, "success");
+          refreshUI();
+          if (lksInput) lksInput.focus();
+        };
       }
+    });
+  };
+}
 
-      if (viewId === 'scan') {
-        setTimeout(() => document.getElementById("lks").focus(), 100);
+function renderScanUI() {
+  if (!db) return;
+
+  const lksInput = document.getElementById("lks");
+  const currentLKS = lksInput ? lksInput.value.trim().toUpperCase() : "";
+
+  const txSO = db.transaction("input_so", "readonly");
+  const reqSO = txSO.objectStore("input_so").getAll();
+
+  reqSO.onsuccess = () => {
+    const data = reqSO.result || [];
+
+    const filteredData = data.filter(item => {
+      const itemLKS = item.lks ? item.lks.toString().trim().toUpperCase() : "";
+      return itemLKS === currentLKS && item.status !== "saved";
+    });
+
+    const recentTbody = document.getElementById("tabel-scan-recent");
+    if (!recentTbody) return;
+
+    if (filteredData.length === 0) {
+      recentTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding:12px;">Tabel bersih. Siap untuk scan ${currentLKS || 'Lokasi baru'}.</td></tr>`;
+      return;
+    }
+
+    recentTbody.innerHTML = filteredData.reverse().map((item, index) => `
+      <tr>
+        <td><b>${index + 1}</b></td>
+        <td><code>${item.barcode}</code></td>
+        <td>${item.nama_barang}</td>
+        <td><b>${item.qty}</b></td>
+        <td>
+          <div class="action-btn-group">
+            <button class="btn-icon edit" title="Edit QTY" onclick="persiapkanEditSO(${item.id})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn-icon delete" title="Hapus Entry" onclick="hapusInputSO(${item.id})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  };
+}
+
+function cariBarangOtomatis() {
+  const barcode = document.getElementById("barcode").value.trim();
+  if (!barcode) return;
+
+  const tx = db.transaction("master_barang", "readonly");
+  const store = tx.objectStore("master_barang");
+  const req = store.get(barcode);
+
+  req.onsuccess = () => {
+    if (req.result) {
+      document.getElementById("nama_barang").value = req.result.nama_barang;
+      playBeep();
+
+      const qtyInput = document.getElementById("qty");
+      qtyInput.focus();
+      qtyInput.select();
+    } else {
+      document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
+    }
+  };
+}
+
+function handleQtyKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    simpanInputSO();
+  }
+}
+
+function simpanInputSO() {
+  const editId = document.getElementById("edit-id-so").value;
+  const lks = document.getElementById("lks").value.trim();
+  const barcode = document.getElementById("barcode").value.trim();
+  const nama = document.getElementById("nama_barang").value;
+  const qty = parseInt(document.getElementById("qty").value) || 0;
+
+  if (!lks) return showToast("Kode Lokasi belum diisi!", "error");
+  if (!barcode || !qty) return showToast("Lengkapi barcode dan QTY terlebih dahulu!", "error");
+
+  const tx = db.transaction("input_so", "readwrite");
+  const store = tx.objectStore("input_so");
+
+  if (editId) {
+    const req = store.get(parseInt(editId));
+    req.onsuccess = () => {
+      const item = req.result;
+      if (item) {
+        item.lks = lks.toUpperCase();
+        item.barcode = barcode;
+        item.nama_barang = nama;
+        item.qty = qty;
+        store.put(item);
       }
+    };
 
+    tx.oncomplete = () => {
+      resetFormScan();
+      showToast("Data Entry Berhasil Diperbarui!", "success");
+      const barcodeInput = document.getElementById("barcode");
+      if (barcodeInput) barcodeInput.focus();
       refreshUI();
-    }
+    };
+  } else {
+    store.add({ 
+      lks: lks.toUpperCase(), 
+      barcode, 
+      nama_barang: nama, 
+      qty, 
+      status: "active",
+      timestamp: new Date().toISOString() 
+    });
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(reg => console.log('Service Worker terdaftar!', reg.scope))
-          .catch(err => console.log('Gagal daftar Service Worker:', err));
-      });
+    tx.oncomplete = () => {
+      resetFormScan();
+      showToast("Entry ditambahkan!", "success");
+      const barcodeInput = document.getElementById("barcode");
+      if (barcodeInput) barcodeInput.focus();
+      refreshUI();
+    };
+  }
+}
+
+function persiapkanEditSO(id) {
+  const tx = db.transaction("input_so", "readonly");
+  const store = tx.objectStore("input_so");
+  const req = store.get(id);
+
+  req.onsuccess = () => {
+    const item = req.result;
+    if (item) {
+      document.getElementById("edit-id-so").value = item.id;
+      document.getElementById("barcode").value = item.barcode;
+      document.getElementById("nama_barang").value = item.nama_barang;
+      document.getElementById("qty").value = item.qty;
+
+      const btnSimpan = document.getElementById("btn-simpan-entry");
+      if (btnSimpan) {
+        btnSimpan.innerText = "✓ Update Entry";
+        btnSimpan.style.background = "#0284c7";
+      }
+
+      const qtyInput = document.getElementById("qty");
+      if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+      }
+
+      showToast("Mode Edit: Silakan sesuaikan QTY", "success");
     }
-  </script>
-</body>
-</html>
+  };
+}
+
+// Batal / Reset Seluruh Field Input Scan
+function batalInputForm() {
+  resetFormScan();
+  showToast("Form berhasil di-reset", "success");
+  
+  const barcodeInput = document.getElementById("barcode");
+  if (barcodeInput) barcodeInput.focus();
+}
+
+function resetFormScan() {
+  document.getElementById("edit-id-so").value = "";
+  document.getElementById("barcode").value = "";
+  document.getElementById("nama_barang").value = "";
+  document.getElementById("qty").value = "1";
+  kunciInputNama();
+
+  const btnSimpan = document.getElementById("btn-simpan-entry");
+  if (btnSimpan) {
+    btnSimpan.innerText = "+ Simpan Entry";
+    btnSimpan.style.background = "var(--primary)";
+  }
+}
+
+// Hapus Entry SO dengan Modal Dinamis
+function hapusInputSO(id) {
+  showCustomConfirm({
+    title: "Hapus Entry SO?",
+    msg: "Yakin ingin menghapus item SO ini dari daftar scan?",
+    iconType: "trash",
+    btnConfirmText: "Ya, Hapus",
+    btnConfirmClass: "btn-danger",
+    onConfirm: () => {
+      const tx = db.transaction("input_so", "readwrite");
+      const store = tx.objectStore("input_so");
+      store.delete(id);
+
+      tx.oncomplete = () => {
+        resetFormScan();
+        showToast("Data SO berhasil dihapus!", "success");
+        refreshUI();
+      };
+    }
+  });
+}
+
+// Modal Konfirmasi Custom Fleksibel & Dinamis
+function showCustomConfirm(options) {
+  const modal = document.getElementById("modal-confirm");
+  if (!modal) return;
+
+  const titleEl = modal.querySelector("h3");
+  const msgEl = document.getElementById("modal-confirm-msg");
+  const btnYa = document.getElementById("btn-modal-ya");
+  const btnBatal = document.getElementById("btn-modal-batal");
+  const iconContainer = modal.querySelector(".modal-card > div:first-child");
+
+  if (typeof options === "string") {
+    options = {
+      title: "Simpan & Finalisasi?",
+      msg: options,
+      onConfirm: arguments[1]
+    };
+  }
+
+  if (titleEl) titleEl.innerText = options.title || "Konfirmasi";
+  if (msgEl) msgEl.innerText = options.msg || "Apakah Anda yakin?";
+  if (btnYa) {
+    btnYa.innerText = options.btnConfirmText || "Ya, Simpan";
+    btnYa.style.background = options.btnConfirmClass === "btn-danger" ? "#dc2626" : "var(--primary)";
+  }
+
+  if (iconContainer) {
+    if (options.iconType === "trash") {
+      iconContainer.style.background = "#fee2e2";
+      iconContainer.style.color = "#dc2626";
+      iconContainer.innerHTML = `<svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
+    } else {
+      iconContainer.style.background = "#ecfdf5";
+      iconContainer.style.color = "var(--primary)";
+      iconContainer.innerHTML = `<svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`;
+    }
+  }
+
+  modal.classList.add("show");
+
+  btnYa.onclick = () => {
+    modal.classList.remove("show");
+    if (typeof options.onConfirm === "function") options.onConfirm();
+  };
+
+  btnBatal.onclick = () => {
+    modal.classList.remove("show");
+  };
+}
+
+// Buka Kamera dengan Penanganan Instance Aman
+function bukaKameraScan() {
+  const lks = document.getElementById("lks").value.trim();
+  if (!lks) {
+    return showToast("Kode Lokasi harus diisi dulu!", "error");
+  }
+
+  const modal = document.getElementById("modal-camera");
+  if (modal) modal.classList.add("show");
+
+  if (html5QrScannerInstance) {
+    html5QrScannerInstance.stop().then(() => {
+      html5QrScannerInstance = null;
+      mulaikanScanner();
+    }).catch(() => {
+      html5QrScannerInstance = null;
+      mulaikanScanner();
+    });
+  } else {
+    mulaikanScanner();
+  }
+}
+
+function mulaikanScanner() {
+  try {
+    html5QrScannerInstance = new Html5Qrcode("interactive");
+
+    html5QrScannerInstance.start(
+      { facingMode: "environment" },
+      {
+        fps: 15,
+        qrbox: { width: 220, height: 90 }
+      },
+      (decodedText) => {
+        document.getElementById("barcode").value = decodedText;
+        playBeep();
+        tutupKameraScan();
+
+        cariBarangOtomatis();
+        showToast("Barcode terbaca: " + decodedText, "success");
+      },
+      (errorMessage) => {
+        // Ignored frame scan errors
+      }
+    ).catch(err => {
+      console.error("Kamera error:", err);
+      showToast("Gagal mengakses kamera. Izinkan akses kamera!", "error");
+      tutupKameraScan();
+    });
+  } catch (err) {
+    console.error("Inisialisasi kamera error:", err);
+    showToast("Fitur kamera gagal diinisialisasi!", "error");
+    tutupKameraScan();
+  }
+}
+
+function tutupKameraScan() {
+  const modal = document.getElementById("modal-camera");
+  if (modal) modal.classList.remove("show");
+
+  if (html5QrScannerInstance) {
+    html5QrScannerInstance.stop().then(() => {
+      html5QrScannerInstance = null;
+    }).catch(() => {
+      html5QrScannerInstance = null;
+    });
+  }
+}
