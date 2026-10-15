@@ -101,6 +101,7 @@ function pilihBarangDariNama(barcode, namaBarang) {
   playBeep();
   kunciInputNama();
 
+  // Focus dan seleksi angka di kolom QTY
   const qtyInput = document.getElementById("qty");
   if (qtyInput) {
     qtyInput.focus();
@@ -215,9 +216,12 @@ function cariBarangOtomatis() {
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
 
+      // Focus ke kolom QTY setelah barcode dikenali
       const qtyInput = document.getElementById("qty");
-      qtyInput.focus();
-      qtyInput.select();
+      if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+      }
     } else {
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
     }
@@ -314,13 +318,59 @@ function persiapkanEditSO(id) {
   };
 }
 
-// Batal / Reset Seluruh Field Input Scan
+// Tombol (X): Hapus Semua Data dengan Kode Lokasi yang Aktif
 function batalInputForm() {
-  resetFormScan();
-  showToast("Form berhasil di-reset", "success");
-  
-  const barcodeInput = document.getElementById("barcode");
-  if (barcodeInput) barcodeInput.focus();
+  const lksInput = document.getElementById("lks");
+  const currentLKS = lksInput ? lksInput.value.trim().toUpperCase() : "";
+
+  if (!currentLKS) {
+    resetFormScan();
+    showToast("Form berhasil di-reset", "success");
+    if (lksInput) lksInput.focus();
+    return;
+  }
+
+  const tx = db.transaction(["input_so"], "readonly");
+  const store = tx.objectStore("input_so");
+  const req = store.getAll();
+
+  req.onsuccess = () => {
+    const allData = req.result || [];
+    const itemsDiLokasi = allData.filter(item => {
+      const itemLKS = item.lks ? item.lks.toString().trim().toUpperCase() : "";
+      return itemLKS === currentLKS && item.status !== "saved";
+    });
+
+    if (itemsDiLokasi.length === 0) {
+      resetFormScan();
+      showToast(`Data di Lokasi ${currentLKS} sudah kosong`, "success");
+      if (lksInput) lksInput.focus();
+      return;
+    }
+
+    showCustomConfirm({
+      title: `Hapus Data Lokasi ${currentLKS}?`,
+      msg: `Yakin ingin menghapus seluruh ${itemsDiLokasi.length} data scan di lokasi ${currentLKS}?`,
+      iconType: "trash",
+      btnConfirmText: "Ya, Hapus Semua",
+      btnConfirmClass: "btn-danger",
+      onConfirm: () => {
+        const txDelete = db.transaction(["input_so"], "readwrite");
+        const storeDelete = txDelete.objectStore("input_so");
+
+        itemsDiLokasi.forEach(item => {
+          storeDelete.delete(item.id);
+        });
+
+        txDelete.oncomplete = () => {
+          resetFormScan();
+          showToast(`Seluruh data di Lokasi ${currentLKS} berhasil dihapus!`, "success");
+          refreshUI();
+          if (lksInput) lksInput.focus();
+        };
+      }
+    });
+  };
 }
 
 function resetFormScan() {
@@ -337,7 +387,7 @@ function resetFormScan() {
   }
 }
 
-// Hapus Entry SO dengan Modal Dinamis
+// Hapus Entry Single SO
 function hapusInputSO(id) {
   showCustomConfirm({
     title: "Hapus Entry SO?",
@@ -419,7 +469,6 @@ function bukaKameraScan() {
   const modal = document.getElementById("modal-camera");
   if (modal) modal.classList.add("show");
 
-  // Jika ada scanner aktif, stop & bersihkan container DOM terlebih dahulu
   if (html5QrScannerInstance) {
     html5QrScannerInstance.stop().then(() => {
       html5QrScannerInstance = null;
@@ -460,6 +509,15 @@ function mulaikanScanner() {
 
         cariBarangOtomatis();
         showToast("Barcode terbaca: " + decodedText, "success");
+
+        // Focus otomatis ke kolom QTY setelah scan dari kamera selesai
+        setTimeout(() => {
+          const qtyInput = document.getElementById("qty");
+          if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+          }
+        }, 150);
       },
       (errorMessage) => {
         // Abaikan error per-frame scanning biasa
