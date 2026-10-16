@@ -5,13 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (lksInput) {
     lksInput.value = "";
     
-    // Pengecekan otomatis saat kursor keluar dari kolom LOKASI (blur)
     lksInput.addEventListener("blur", () => {
       cekLokasiDiLaporan();
     });
   }
 
-  // Sembunyikan dropdown jika mengklik di luar area input nama barang
   document.addEventListener("click", (e) => {
     const dropdown = document.getElementById("search-nama-results");
     const inputNama = document.getElementById("nama_barang");
@@ -23,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Pengecekan Apakah Kode Lokasi Sudah Ada di Laporan
 function cekLokasiDiLaporan() {
   const lksInput = document.getElementById("lks");
   if (!lksInput || !db) return;
@@ -42,7 +39,6 @@ function cekLokasiDiLaporan() {
       return itemLKS === currentLKS && item.status === "saved";
     });
 
-    // Jika lokasi sudah tersimpan di Laporan, tampilkan dialog konfirmasi
     if (dataSaved.length > 0) {
       showCustomConfirm({
         title: `Lokasi ${currentLKS} Sudah Ada!`,
@@ -50,7 +46,6 @@ function cekLokasiDiLaporan() {
         iconType: "save",
         btnConfirmText: "Lanjut (Edit)",
         onConfirm: () => {
-          // Ubah status data di laporan kembali ke 'active'
           const txUpdate = db.transaction(["input_so"], "readwrite");
           const storeUpdate = txUpdate.objectStore("input_so");
 
@@ -67,7 +62,6 @@ function cekLokasiDiLaporan() {
           };
         },
         onCancel: () => {
-          // Batal: Kosongkan kolom lokasi & kembalikan kursor ke LOKASI
           lksInput.value = "";
           resetFormScan();
           refreshUI();
@@ -86,7 +80,6 @@ function handleLksKeydown(event) {
   }
 }
 
-// Buka/Tutup Mode Pencarian Nama Barang
 function toggleCariNama() {
   const inputNama = document.getElementById("nama_barang");
   const btnUnlock = document.getElementById("btn-unlock-nama");
@@ -95,7 +88,7 @@ function toggleCariNama() {
     inputNama.readOnly = false;
     inputNama.style.background = "#ffffff";
     inputNama.style.color = "var(--text-main)";
-    btnUnlock.style.background = "#dc2626"; // Berubah merah (Cancel)
+    btnUnlock.style.background = "#dc2626";
     inputNama.focus();
     cariBarangByNamaManual();
   } else {
@@ -111,11 +104,10 @@ function kunciInputNama() {
   inputNama.readOnly = true;
   inputNama.style.background = "#f8fafc";
   inputNama.style.color = "var(--text-muted)";
-  btnUnlock.style.background = "#059669"; // Berubah hijau (Search)
+  btnUnlock.style.background = "#059669";
   if (dropdown) dropdown.classList.remove("show");
 }
 
-// Pencarian Barang berdasarkan Nama (A-Z & Contains)
 function cariBarangByNamaManual() {
   const keyword = document.getElementById("nama_barang").value.trim().toLowerCase();
   const dropdown = document.getElementById("search-nama-results");
@@ -155,7 +147,6 @@ function cariBarangByNamaManual() {
   };
 }
 
-// Handler Saat Item Hasil Pencarian Diklik
 function pilihBarangDariNama(barcode, namaBarang) {
   document.getElementById("barcode").value = barcode;
   document.getElementById("nama_barang").value = namaBarang;
@@ -163,7 +154,6 @@ function pilihBarangDariNama(barcode, namaBarang) {
   playBeep();
   kunciInputNama();
 
-  // Focus dan seleksi angka di kolom QTY
   const qtyInput = document.getElementById("qty");
   if (qtyInput) {
     qtyInput.focus();
@@ -278,7 +268,6 @@ function cariBarangOtomatis() {
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
 
-      // Focus ke kolom QTY setelah barcode ditemukan
       const qtyInput = document.getElementById("qty");
       if (qtyInput) {
         qtyInput.focus();
@@ -363,7 +352,6 @@ function persiapkanEditSO(id) {
       document.getElementById("nama_barang").value = item.nama_barang;
       document.getElementById("qty").value = item.qty;
 
-      // Ubah ikon tombol simpan menjadi Centang (Update Mode)
       const btnSimpan = document.getElementById("btn-simpan-entry");
       if (btnSimpan) {
         btnSimpan.title = "Update Entry";
@@ -385,7 +373,6 @@ function persiapkanEditSO(id) {
   };
 }
 
-// Tombol (X): Hapus Semua Data Scan dengan Kode Lokasi yang Aktif
 function batalInputForm() {
   const lksInput = document.getElementById("lks");
   const currentLKS = lksInput ? lksInput.value.trim().toUpperCase() : "";
@@ -451,7 +438,6 @@ function resetFormScan() {
   document.getElementById("qty").value = "1";
   kunciInputNama();
 
-  // Kembalikan ikon tombol ke Plus (+)
   const btnSimpan = document.getElementById("btn-simpan-entry");
   if (btnSimpan) {
     btnSimpan.title = "Simpan Entry";
@@ -464,7 +450,6 @@ function resetFormScan() {
   }
 }
 
-// Hapus Entry Single SO
 function hapusInputSO(id) {
   showCustomConfirm({
     title: "Hapus Entry SO?",
@@ -486,7 +471,6 @@ function hapusInputSO(id) {
   });
 }
 
-// Modal Konfirmasi Custom Fleksibel & Dinamis (Mendukung Handler Cancel)
 function showCustomConfirm(options) {
   const modal = document.getElementById("modal-confirm");
   if (!modal) return;
@@ -537,7 +521,6 @@ function showCustomConfirm(options) {
   };
 }
 
-// Buka Kamera Scan
 function bukaKameraScan() {
   const lks = document.getElementById("lks").value.trim();
   if (!lks) {
@@ -588,7 +571,6 @@ function mulaikanScanner() {
         cariBarangOtomatis();
         showToast("Barcode terbaca: " + decodedText, "success");
 
-        // Focus otomatis ke kolom QTY setelah scan dari kamera selesai
         setTimeout(() => {
           const qtyInput = document.getElementById("qty");
           if (qtyInput) {
@@ -598,7 +580,7 @@ function mulaikanScanner() {
         }, 150);
       },
       (errorMessage) => {
-        // Abaikan error per-frame scanning biasa
+        // Abaikan error per-frame
       }
     ).catch(err => {
       console.error("Kamera error:", err);

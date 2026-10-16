@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="stylesheet" href="css/style.css?v=17">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -33,7 +33,6 @@
 
     <!-- 1. VIEW BERANDA -->
     <div id="view-beranda" class="view active">
-      <!-- LOGO WALL.PNG CENTER DI ATAS BERANDA -->
       <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px; padding: 4px 0;">
         <img src="wall.png" alt="Swalayan Maga Logo" style="max-width: 160px; width: 50%; height: auto; opacity: 0.95; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));">
       </div>
@@ -93,13 +92,11 @@
 
         <!-- LOKASI & BARCODE SEJAJAR -->
         <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-          <!-- KOLOM LOKASI -->
           <div class="form-group" style="width: 32%; margin-bottom: 0;">
             <label>LOKASI</label>
             <input type="text" id="lks" class="input-control" value="" placeholder="Lokasi" onkeydown="handleLksKeydown(event)">
           </div>
 
-          <!-- KOLOM BARCODE BARANG -->
           <div class="form-group" style="flex: 1; margin-bottom: 0;">
             <label>BARCODE BARANG</label>
             <div style="display: flex; gap: 4px; align-items: center;">
@@ -114,9 +111,8 @@
           </div>
         </div>
 
-        <!-- NAMA BARANG & QTY SEJAJAR DENGAN TOMBOL IKON -->
+        <!-- NAMA BARANG & QTY SEJAJAR -->
         <div style="display: flex; gap: 6px; margin-bottom: 0;">
-          <!-- KOLOM NAMA BARANG (DENGAN DROPDOWN PENCARIAN) -->
           <div class="form-group" style="flex: 1; position: relative; margin-bottom: 0;">
             <label>NAMA BARANG</label>
             <div style="display: flex; gap: 4px; align-items: center;">
@@ -128,17 +124,14 @@
                 </svg>
               </button>
             </div>
-            <!-- DROPDOWN PENCARIAN NAMA BARANG -->
             <div id="search-nama-results" class="search-dropdown"></div>
           </div>
 
-          <!-- KOLOM QTY + TOMBOL SIMPAN (IKON PLUS) + TOMBOL BATAL (IKON X MERAH) -->
           <div class="form-group" style="width: 110px; margin-bottom: 0;">
             <label>QTY</label>
             <div style="display: flex; gap: 3px; align-items: center;">
               <input type="number" id="qty" class="input-control" value="1" onkeydown="handleQtyKeydown(event)" style="flex: 1; min-width: 0; text-align: center; padding: 6px 4px;">
               
-              <!-- Tombol Simpan (Ikon Plus) -->
               <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()" title="Simpan Entry" style="width: 29px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <svg style="width: 15px; height: 15px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
                   <line x1="12" y1="5" x2="12" y2="19"/>
@@ -146,7 +139,6 @@
                 </svg>
               </button>
 
-              <!-- Tombol Batal / Reset (Ikon Silang Merah) -->
               <button class="btn" id="btn-batal-entry" onclick="batalInputForm()" title="Reset Form" style="width: 29px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
                 <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
                   <line x1="18" y1="6" x2="6" y2="18"/>
@@ -158,7 +150,6 @@
         </div>
       </div>
 
-      <!-- KARTU TABEL INPUT SCAN & TOMBOL SIMPAN LOKASI DI ATASNYA -->
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <h3 style="font-size: 0.8rem; font-weight: 600;">Terakhir Di-input</h3>
@@ -184,7 +175,7 @@
       </div>
     </div>
 
-    <!-- 4. VIEW LAPORAN (REKAP PER LOKASI) -->
+    <!-- 4. VIEW LAPORAN -->
     <div id="view-laporan" class="view">
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -212,6 +203,19 @@
 
     <!-- 5. VIEW PENGATURAN -->
     <div id="view-pengaturan" class="view">
+      <!-- FITUR BARU: OPSI MODE PDT / SEMBUNYIKAN KEYBOARD -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="font-size: 0.8rem; font-weight: 600;">Mode Alat PDT / Scanner Laser</h3>
+            <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">
+              Sembunyikan keyboard Layar saat menggunakan PDT Newland
+            </p>
+          </div>
+          <input type="checkbox" id="toggle-mode-pdt" onchange="simpanPengaturanPDT()" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+        </div>
+      </div>
+
       <div class="card">
         <h3 style="margin-bottom: 6px; font-size: 0.8rem; font-weight: 600;">Import File Master Data (JSON / TXT)</h3>
         <p style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 10px; line-height: 1.35;">
@@ -233,7 +237,6 @@
         </button>
       </div>
 
-      <!-- KARTU COPYRIGHT -->
       <div class="card" style="text-align: center; background: transparent; border: none; box-shadow: none; margin-top: 16px; padding: 8px;">
         <p style="font-size: 0.68rem; color: var(--text-muted); font-weight: 600;">
           Stock Opname PWA v1.0
@@ -246,7 +249,7 @@
 
   </div>
 
-  <!-- Modal Popup Tambah/Edit Master Data -->
+  <!-- Modal Master -->
   <div id="modal-master" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
@@ -269,7 +272,7 @@
     </div>
   </div>
 
-  <!-- Modal Detail Rincian Barang Per Lokasi -->
+  <!-- Modal Detail -->
   <div id="modal-detail-lks" class="modal-overlay">
     <div class="modal-card" style="max-width: 360px; width: 95%;">
       <div class="modal-header">
@@ -295,7 +298,7 @@
     </div>
   </div>
 
-  <!-- Modal Kamera Scan Barcode -->
+  <!-- Modal Kamera -->
   <div id="modal-camera" class="modal-overlay">
     <div class="modal-card" style="max-width: 320px; width: 95%; padding: 10px;">
       <div class="modal-header">
@@ -312,7 +315,7 @@
     </div>
   </div>
 
-  <!-- Modal Konfirmasi Custom Elegant -->
+  <!-- Modal Confirm -->
   <div id="modal-confirm" class="modal-overlay">
     <div class="modal-card" style="text-align: center; max-width: 280px;">
       <div style="width: 36px; height: 36px; background: #ecfdf5; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto;">
@@ -329,13 +332,13 @@
     </div>
   </div>
 
-  <!-- Toast Notification Floating -->
+  <!-- Toast -->
   <div id="toast" class="toast">
     <div class="toast-icon" id="toast-icon">✓</div>
     <div class="toast-message" id="toast-message">Notifikasi</div>
   </div>
 
-  <!-- Bottom Navigation Bar (5 Items) -->
+  <!-- Bottom Nav -->
   <div class="bottom-nav">
     <div class="nav-item active" onclick="switchNav('beranda', 'Beranda')">
       <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -365,13 +368,12 @@
     </div>
   </div>
 
-  <!-- Import Modul JavaScript versi v=16 -->
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=16"></script>
-  <script src="js/laporan.js?v=16"></script>
-  <script src="js/pengaturan.js"></script>
+  <script src="js/scan.js?v=17"></script>
+  <script src="js/laporan.js?v=17"></script>
+  <script src="js/pengaturan.js?v=17"></script>
   
   <script>
     function switchNav(viewId, title) {
@@ -385,6 +387,7 @@
 
       if (viewId === 'scan') {
         topBar.classList.add('hide-on-scan');
+        terapkanModePDT(); // Terapkan aturan keyboard saat masuk view scan
       } else {
         topBar.classList.remove('hide-on-scan');
         pageTitle.innerText = title;
