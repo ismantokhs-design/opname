@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=18">
+  <link rel="stylesheet" href="css/style.css?v=19">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -370,9 +370,9 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=18"></script>
-  <script src="js/laporan.js?v=18"></script>
-  <script src="js/pengaturan.js?v=18"></script>
+  <script src="js/scan.js?v=19"></script>
+  <script src="js/laporan.js?v=19"></script>
+  <script src="js/pengaturan.js?v=19"></script>
   
   <script>
     function switchNav(viewId, title) {
@@ -387,6 +387,9 @@
       if (viewId === 'scan') {
         topBar.classList.add('hide-on-scan');
         terapkanModePDT();
+        if (typeof fokuskanInputUtama === "function") {
+          fokuskanInputUtama();
+        }
       } else {
         topBar.classList.remove('hide-on-scan');
         pageTitle.innerText = title;
@@ -395,10 +398,6 @@
       const navIndex = ['beranda', 'master', 'scan', 'laporan', 'pengaturan'].indexOf(viewId);
       if (navIndex !== -1) {
         document.querySelectorAll('.nav-item')[navIndex].classList.add('active');
-      }
-
-      if (viewId === 'scan') {
-        setTimeout(() => document.getElementById("lks").focus(), 100);
       }
 
       refreshUI();
