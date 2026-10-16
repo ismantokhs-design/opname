@@ -2,14 +2,29 @@ let html5QrScannerInstance = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const lksInput = document.getElementById("lks");
+  const barcodeInput = document.getElementById("barcode");
+
   if (lksInput) {
     lksInput.value = "";
     
+    // Pengecekan otomatis saat kursor keluar dari kolom LOKASI (blur)
     lksInput.addEventListener("blur", () => {
       cekLokasiDiLaporan();
     });
   }
 
+  // Auto-focus otomatis saat pertama kali aplikasi dimuat
+  setTimeout(() => {
+    if (lksInput && lksInput.value.trim() === "") {
+      lksInput.focus();
+      lksInput.select();
+    } else if (barcodeInput) {
+      barcodeInput.focus();
+      barcodeInput.select();
+    }
+  }, 250);
+
+  // Sembunyikan dropdown jika mengklik di luar area input nama barang
   document.addEventListener("click", (e) => {
     const dropdown = document.getElementById("search-nama-results");
     const inputNama = document.getElementById("nama_barang");
@@ -21,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// Pengecekan Apakah Kode Lokasi Sudah Ada di Laporan
 function cekLokasiDiLaporan() {
   const lksInput = document.getElementById("lks");
   if (!lksInput || !db) return;
@@ -39,6 +55,7 @@ function cekLokasiDiLaporan() {
       return itemLKS === currentLKS && item.status === "saved";
     });
 
+    // Jika lokasi sudah tersimpan di Laporan, tampilkan dialog konfirmasi
     if (dataSaved.length > 0) {
       showCustomConfirm({
         title: `Lokasi ${currentLKS} Sudah Ada!`,
@@ -46,6 +63,7 @@ function cekLokasiDiLaporan() {
         iconType: "save",
         btnConfirmText: "Lanjut (Edit)",
         onConfirm: () => {
+          // Ubah status data di laporan kembali ke 'active'
           const txUpdate = db.transaction(["input_so"], "readwrite");
           const storeUpdate = txUpdate.objectStore("input_so");
 
@@ -58,14 +76,21 @@ function cekLokasiDiLaporan() {
             showToast(`Data Lokasi ${currentLKS} dibuka kembali untuk diedit!`, "success");
             refreshUI();
             const barcodeInput = document.getElementById("barcode");
-            if (barcodeInput) barcodeInput.focus();
+            if (barcodeInput) {
+              barcodeInput.focus();
+              barcodeInput.select();
+            }
           };
         },
         onCancel: () => {
+          // Batal: Kosongkan kolom lokasi & kembalikan kursor ke LOKASI
           lksInput.value = "";
           resetFormScan();
           refreshUI();
-          setTimeout(() => lksInput.focus(), 100);
+          setTimeout(() => {
+            lksInput.focus();
+            lksInput.select();
+          }, 100);
         }
       });
     }
@@ -76,10 +101,14 @@ function handleLksKeydown(event) {
   if (event.key === "Enter") {
     event.preventDefault();
     const barcodeInput = document.getElementById("barcode");
-    if (barcodeInput) barcodeInput.focus();
+    if (barcodeInput) {
+      barcodeInput.focus();
+      barcodeInput.select();
+    }
   }
 }
 
+// Buka/Tutup Mode Pencarian Nama Barang
 function toggleCariNama() {
   const inputNama = document.getElementById("nama_barang");
   const btnUnlock = document.getElementById("btn-unlock-nama");
@@ -88,7 +117,7 @@ function toggleCariNama() {
     inputNama.readOnly = false;
     inputNama.style.background = "#ffffff";
     inputNama.style.color = "var(--text-main)";
-    btnUnlock.style.background = "#dc2626";
+    btnUnlock.style.background = "#dc2626"; // Berubah merah (Cancel)
     inputNama.focus();
     cariBarangByNamaManual();
   } else {
@@ -104,10 +133,11 @@ function kunciInputNama() {
   inputNama.readOnly = true;
   inputNama.style.background = "#f8fafc";
   inputNama.style.color = "var(--text-muted)";
-  btnUnlock.style.background = "#059669";
+  btnUnlock.style.background = "#059669"; // Berubah hijau (Search)
   if (dropdown) dropdown.classList.remove("show");
 }
 
+// Pencarian Barang berdasarkan Nama (A-Z & Contains)
 function cariBarangByNamaManual() {
   const keyword = document.getElementById("nama_barang").value.trim().toLowerCase();
   const dropdown = document.getElementById("search-nama-results");
@@ -147,6 +177,7 @@ function cariBarangByNamaManual() {
   };
 }
 
+// Handler Saat Item Hasil Pencarian Diklik
 function pilihBarangDariNama(barcode, namaBarang) {
   document.getElementById("barcode").value = barcode;
   document.getElementById("nama_barang").value = namaBarang;
@@ -154,6 +185,7 @@ function pilihBarangDariNama(barcode, namaBarang) {
   playBeep();
   kunciInputNama();
 
+  // Focus dan seleksi angka di kolom QTY
   const qtyInput = document.getElementById("qty");
   if (qtyInput) {
     qtyInput.focus();
@@ -202,7 +234,10 @@ function simpanLokasiLKS() {
           if (lksInput) lksInput.value = "";
           showToast(`Data ${currentLKS} berhasil disimpan ke Laporan!`, "success");
           refreshUI();
-          if (lksInput) lksInput.focus();
+          if (lksInput) {
+            lksInput.focus();
+            lksInput.select();
+          }
         };
       }
     });
@@ -268,6 +303,7 @@ function cariBarangOtomatis() {
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
 
+      // Focus ke kolom QTY setelah barcode ditemukan
       const qtyInput = document.getElementById("qty");
       if (qtyInput) {
         qtyInput.focus();
@@ -316,7 +352,10 @@ function simpanInputSO() {
       resetFormScan();
       showToast("Data Entry Berhasil Diperbarui!", "success");
       const barcodeInput = document.getElementById("barcode");
-      if (barcodeInput) barcodeInput.focus();
+      if (barcodeInput) {
+        barcodeInput.focus();
+        barcodeInput.select();
+      }
       refreshUI();
     };
   } else {
@@ -333,7 +372,10 @@ function simpanInputSO() {
       resetFormScan();
       showToast("Entry ditambahkan!", "success");
       const barcodeInput = document.getElementById("barcode");
-      if (barcodeInput) barcodeInput.focus();
+      if (barcodeInput) {
+        barcodeInput.focus();
+        barcodeInput.select();
+      }
       refreshUI();
     };
   }
@@ -380,7 +422,10 @@ function batalInputForm() {
   if (!currentLKS) {
     resetFormScan();
     showToast("Form berhasil di-reset", "success");
-    if (lksInput) lksInput.focus();
+    if (lksInput) {
+      lksInput.focus();
+      lksInput.select();
+    }
     return;
   }
 
@@ -399,7 +444,10 @@ function batalInputForm() {
     if (itemsDiLokasi.length === 0) {
       resetFormScan();
       showToast(`Data di Lokasi ${currentLKS} sudah kosong`, "success");
-      if (lksInput) lksInput.focus();
+      if (lksInput) {
+        lksInput.focus();
+        lksInput.select();
+      }
       return;
     }
 
@@ -424,6 +472,7 @@ function batalInputForm() {
           if (lksInput) {
             lksInput.value = "";
             lksInput.focus();
+            lksInput.select();
           }
         };
       }
