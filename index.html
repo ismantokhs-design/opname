@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=23">
+  <link rel="stylesheet" href="css/style.css?v=25">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -149,7 +149,7 @@
           </div>
         </div>
 
-        <!-- KOLOM KETERANGAN DENGAN ON/OFF PENGATURAN -->
+        <!-- KOLOM KETERANGAN -->
         <div id="wrapper-keterangan" class="form-group" style="display: none; margin-bottom: 0; margin-top: 4px;">
           <label>KETERANGAN (KONDISI BARANG)</label>
           <input type="text" id="keterangan" class="input-control" autocomplete="off" placeholder="Misal: Rusak, Patah, Expired..." onkeydown="handleKeteranganKeydown(event)">
@@ -190,6 +190,15 @@
             <h3 style="font-size: 0.8rem; font-weight: 600;">Rekap Hasil SO Per Lokasi</h3>
             <span id="count-rekap-lks" style="font-size: 0.65rem; color: var(--text-muted); font-weight: 500;">0 Lokasi Terdata</span>
           </div>
+          <!-- TOMBOL EXPORT KESELURUHAN -->
+          <button class="btn btn-sm" onclick="exportSemuaLokasiKeText()" style="background: #059669; color: white; padding: 5px 10px; font-size: 0.75rem; display: flex; align-items: center; gap: 4px;">
+            <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Export Semua (.txt)
+          </button>
         </div>
         <div class="table-container">
           <table>
@@ -222,7 +231,6 @@
         </div>
       </div>
 
-      <!-- SAKELAR BARU: MUNCULKAN KOLOM KETERANGAN -->
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
@@ -391,9 +399,9 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=23"></script>
-  <script src="js/laporan.js?v=23"></script>
-  <script src="js/pengaturan.js?v=23"></script>
+  <script src="js/scan.js?v=25"></script>
+  <script src="js/laporan.js?v=25"></script>
+  <script src="js/pengaturan.js?v=25"></script>
   
   <script>
     function switchNav(viewId, title) {
