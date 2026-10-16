@@ -11,9 +11,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Tangkap event pemindaian laser pada kolom Barcode sejak pertama kali dimuat
+  // Tangkap event pemindaian laser pada kolom Barcode
   if (barcodeInput) {
-    // Event 1: Menangkap jika laser mengirim tombol Enter di akhir scan
     barcodeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -21,13 +20,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Event 2: Menangkap input instan dari tembakan laser pertama
     barcodeInput.addEventListener("input", () => {
       cariBarangOtomatis();
     });
   }
 
-  // Paksa kursor fokus aktif seketika
+  // Paksa kursor fokus aktif seketika pada input utama
   fokuskanInputUtama();
 
   // Sembunyikan dropdown jika mengklik di luar area input nama barang
@@ -42,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Fungsi Khusus Memaksa Fokus Siap Scan Pertama
+// Fungsi Khusus Memaksa Fokus Siap Scan
 function fokuskanInputUtama() {
   setTimeout(() => {
     const lksInput = document.getElementById("lks");
@@ -194,8 +192,10 @@ function pilihBarangDariNama(barcode, namaBarang) {
 
   const qtyInput = document.getElementById("qty");
   if (qtyInput) {
-    qtyInput.focus();
-    qtyInput.select();
+    setTimeout(() => {
+      qtyInput.focus();
+      qtyInput.select();
+    }, 50);
   }
 }
 
@@ -293,6 +293,7 @@ function renderScanUI() {
   };
 }
 
+// LOGIKA PENTING: BERHENTI DI QTY DENGAN ANGKA 1 TERBLOCK
 function cariBarangOtomatis() {
   const barcodeInput = document.getElementById("barcode");
   if (!barcodeInput) return;
@@ -309,10 +310,13 @@ function cariBarangOtomatis() {
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
 
+      // Pindahkan kursor ke QTY & sorot angka "1"
       const qtyInput = document.getElementById("qty");
       if (qtyInput) {
-        qtyInput.focus();
-        qtyInput.select();
+        setTimeout(() => {
+          qtyInput.focus();
+          qtyInput.select(); // Blok angka 1 agar siap di-edit atau langsung di-Enter
+        }, 50);
       }
     } else {
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
@@ -403,8 +407,10 @@ function persiapkanEditSO(id) {
 
       const qtyInput = document.getElementById("qty");
       if (qtyInput) {
-        qtyInput.focus();
-        qtyInput.select();
+        setTimeout(() => {
+          qtyInput.focus();
+          qtyInput.select();
+        }, 50);
       }
 
       showToast("Mode Edit: Silakan sesuaikan QTY", "success");
