@@ -363,10 +363,15 @@ function persiapkanEditSO(id) {
       document.getElementById("nama_barang").value = item.nama_barang;
       document.getElementById("qty").value = item.qty;
 
+      // Ubah ikon tombol simpan menjadi Centang (Update Mode)
       const btnSimpan = document.getElementById("btn-simpan-entry");
       if (btnSimpan) {
-        btnSimpan.innerText = "✓ Update Entry";
+        btnSimpan.title = "Update Entry";
         btnSimpan.style.background = "#0284c7";
+        btnSimpan.innerHTML = `
+          <svg style="width: 15px; height: 15px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>`;
       }
 
       const qtyInput = document.getElementById("qty");
@@ -446,10 +451,16 @@ function resetFormScan() {
   document.getElementById("qty").value = "1";
   kunciInputNama();
 
+  // Kembalikan ikon tombol ke Plus (+)
   const btnSimpan = document.getElementById("btn-simpan-entry");
   if (btnSimpan) {
-    btnSimpan.innerText = "+ Simpan Entry";
+    btnSimpan.title = "Simpan Entry";
     btnSimpan.style.background = "var(--primary)";
+    btnSimpan.innerHTML = `
+      <svg style="width: 15px; height: 15px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>`;
   }
 }
 

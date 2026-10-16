@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=14">
+  <link rel="stylesheet" href="css/style.css?v=16">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -91,66 +91,82 @@
       <div class="card" style="margin-top: 0;">
         <input type="hidden" id="edit-id-so" value="">
 
-        <div class="form-group">
-          <label>LOKASI</label>
-          <div style="display: flex; gap: 5px;">
-            <input type="text" id="lks" class="input-control" value="" placeholder="Masukkan Kode Lokasi" onkeydown="handleLksKeydown(event)">
-            <button class="btn btn-sm" onclick="simpanLokasiLKS()" style="white-space: nowrap;">Simpan Lokasi</button>
+        <!-- LOKASI & BARCODE SEJAJAR -->
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+          <!-- KOLOM LOKASI -->
+          <div class="form-group" style="width: 32%; margin-bottom: 0;">
+            <label>LOKASI</label>
+            <input type="text" id="lks" class="input-control" value="" placeholder="Lokasi" onkeydown="handleLksKeydown(event)">
+          </div>
+
+          <!-- KOLOM BARCODE BARANG -->
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label>BARCODE BARANG</label>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <input type="text" id="barcode" class="input-control" placeholder="Scan / ketik barcode..." oninput="cariBarangOtomatis()" style="flex: 1;">
+              <button type="button" id="btn-camera-scan" onclick="bukaKameraScan()" style="width: 32px; height: 29px; background: #2563eb !important; color: white !important; border: none; border-radius: 6px; display: flex !important; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+                <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Barcode Barang</label>
-          <div style="display: flex; gap: 5px; align-items: center;">
-            <input type="text" id="barcode" class="input-control" placeholder="Scan / ketik barcode..." oninput="cariBarangOtomatis()" style="flex: 1;">
-            <button type="button" id="btn-camera-scan" onclick="bukaKameraScan()" style="width: 32px; height: 29px; background: #2563eb !important; color: white !important; border: none; border-radius: 6px; display: flex !important; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
-              <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </button>
+        <!-- NAMA BARANG & QTY SEJAJAR DENGAN TOMBOL IKON -->
+        <div style="display: flex; gap: 6px; margin-bottom: 0;">
+          <!-- KOLOM NAMA BARANG (DENGAN DROPDOWN PENCARIAN) -->
+          <div class="form-group" style="flex: 1; position: relative; margin-bottom: 0;">
+            <label>NAMA BARANG</label>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <input type="text" id="nama_barang" class="input-control" placeholder="Nama barang..." readonly onkeyup="cariBarangByNamaManual()" style="background: #f8fafc; color: var(--text-muted); flex: 1;">
+              <button type="button" id="btn-unlock-nama" onclick="toggleCariNama()" title="Cari berdasarkan nama" style="width: 32px; height: 29px; background: #059669; color: white; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
+                <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </button>
+            </div>
+            <!-- DROPDOWN PENCARIAN NAMA BARANG -->
+            <div id="search-nama-results" class="search-dropdown"></div>
           </div>
-        </div>
 
-        <!-- KOLOM NAMA BARANG DENGAN TOMBOL CARI & DROPDOWN RESULT -->
-        <div class="form-group" style="position: relative;">
-          <label>Nama Barang</label>
-          <div style="display: flex; gap: 5px; align-items: center;">
-            <input type="text" id="nama_barang" class="input-control" placeholder="Nama barang otomatis / ketik untuk cari..." readonly onkeyup="cariBarangByNamaManual()" style="background: #f8fafc; color: var(--text-muted); flex: 1;">
-            <button type="button" id="btn-unlock-nama" onclick="toggleCariNama()" title="Cari berdasarkan nama" style="width: 32px; height: 29px; background: #059669; color: white; border: none; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;">
-              <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-            </button>
-          </div>
-          <!-- DROPDOWN PENCARIAN NAMA BARANG -->
-          <div id="search-nama-results" class="search-dropdown"></div>
-        </div>
+          <!-- KOLOM QTY + TOMBOL SIMPAN (IKON PLUS) + TOMBOL BATAL (IKON X MERAH) -->
+          <div class="form-group" style="width: 110px; margin-bottom: 0;">
+            <label>QTY</label>
+            <div style="display: flex; gap: 3px; align-items: center;">
+              <input type="number" id="qty" class="input-control" value="1" onkeydown="handleQtyKeydown(event)" style="flex: 1; min-width: 0; text-align: center; padding: 6px 4px;">
+              
+              <!-- Tombol Simpan (Ikon Plus) -->
+              <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()" title="Simpan Entry" style="width: 29px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg style="width: 15px; height: 15px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/>
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
 
-        <!-- INPUT QTY, TOMBOL SIMPAN, DAN TOMBOL BATAL/RESET MERAH -->
-        <div class="form-group" style="margin-bottom: 0;">
-          <label>QTY / JUMLAH</label>
-          <div style="display: flex; gap: 4px; align-items: center;">
-            <input type="number" id="qty" class="input-control" value="1" onkeydown="handleQtyKeydown(event)" style="flex: 1;">
-            
-            <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()" style="width: auto; padding: 6px 10px; white-space: nowrap;">
-              + Simpan Entry
-            </button>
-
-            <!-- Tombol Batal Warna Merah -->
-            <button class="btn" id="btn-batal-entry" onclick="batalInputForm()" title="Reset Form" style="width: 32px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
-              <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
+              <!-- Tombol Batal / Reset (Ikon Silang Merah) -->
+              <button class="btn" id="btn-batal-entry" onclick="batalInputForm()" title="Reset Form" style="width: 29px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+                <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- KARTU TABEL INPUT SCAN & TOMBOL SIMPAN LOKASI DI ATASNYA -->
       <div class="card">
-        <h3 style="margin-bottom: 8px; font-size: 0.8rem; font-weight: 600;">Terakhir Di-input</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 style="font-size: 0.8rem; font-weight: 600;">Terakhir Di-input</h3>
+          <button class="btn btn-sm" onclick="simpanLokasiLKS()" style="white-space: nowrap; background: #059669; padding: 5px 10px;">
+            Simpan Lokasi
+          </button>
+        </div>
+
         <div class="table-container">
           <table>
             <thead>
@@ -349,12 +365,12 @@
     </div>
   </div>
 
-  <!-- Import Modul JavaScript versi v=14 -->
+  <!-- Import Modul JavaScript versi v=16 -->
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=14"></script>
-  <script src="js/laporan.js?v=14"></script>
+  <script src="js/scan.js?v=16"></script>
+  <script src="js/laporan.js?v=16"></script>
   <script src="js/pengaturan.js"></script>
   
   <script>
@@ -367,7 +383,6 @@
       const topBar = document.getElementById('main-top-bar');
       const pageTitle = document.getElementById('page-title');
 
-      // Sembunyikan header jika di halaman Scan
       if (viewId === 'scan') {
         topBar.classList.add('hide-on-scan');
       } else {
