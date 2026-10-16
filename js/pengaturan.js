@@ -1,8 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   muatPengaturanPDT();
+  muatPengaturanKeterangan();
 });
 
-// Memuat status sakelar saat aplikasi dibuka
+// Memuat status sakelar PDT saat aplikasi dibuka
 function muatPengaturanPDT() {
   const toggle = document.getElementById("toggle-mode-pdt");
   if (!toggle) return;
@@ -13,7 +14,7 @@ function muatPengaturanPDT() {
   terapkanModePDT();
 }
 
-// Menyimpan status sakelar saat diklik oleh user
+// Menyimpan status sakelar PDT saat diklik oleh user
 function simpanPengaturanPDT() {
   const toggle = document.getElementById("toggle-mode-pdt");
   if (!toggle) return;
@@ -28,22 +29,67 @@ function simpanPengaturanPDT() {
   }
 }
 
-// Mengatur atribut inputmode pada elemen scan (LOKASI, BARCODE, QTY) secara dinamis
+// Mengatur atribut inputmode pada elemen scan (LOKASI, BARCODE, QTY, KETERANGAN) secara dinamis
 function terapkanModePDT() {
   const isPDTMode = localStorage.getItem("pdt_mode_enabled") === "true";
   
   const barcodeInput = document.getElementById("barcode");
   const lksInput = document.getElementById("lks");
   const qtyInput = document.getElementById("qty");
+  const ketInput = document.getElementById("keterangan");
 
   if (isPDTMode) {
     if (barcodeInput) barcodeInput.setAttribute("inputmode", "none");
     if (lksInput) lksInput.setAttribute("inputmode", "none");
     if (qtyInput) qtyInput.setAttribute("inputmode", "none");
+    if (ketInput) ketInput.setAttribute("inputmode", "none");
   } else {
     if (barcodeInput) barcodeInput.removeAttribute("inputmode");
     if (lksInput) lksInput.removeAttribute("inputmode");
     if (qtyInput) qtyInput.removeAttribute("inputmode");
+    if (ketInput) ketInput.removeAttribute("inputmode");
+  }
+}
+
+// Memuat status sakelar Kolom Keterangan
+function muatPengaturanKeterangan() {
+  const toggle = document.getElementById("toggle-keterangan");
+  if (!toggle) return;
+
+  const isKetEnabled = localStorage.getItem("keterangan_enabled") === "true";
+  toggle.checked = isKetEnabled;
+
+  terapkanTampilanKeterangan();
+}
+
+// Menyimpan status sakelar Kolom Keterangan
+function simpanPengaturanKeterangan() {
+  const toggle = document.getElementById("toggle-keterangan");
+  if (!toggle) return;
+
+  localStorage.setItem("keterangan_enabled", toggle.checked);
+  terapkanTampilanKeterangan();
+
+  if (toggle.checked) {
+    showToast("Kolom Keterangan diaktifkan!", "success");
+  } else {
+    showToast("Kolom Keterangan disembunyikan!", "success");
+  }
+
+  refreshUI();
+}
+
+// Mengatur Tampilan Elemen Kolom Keterangan di Halaman Scan
+function terapkanTampilanKeterangan() {
+  const isKetEnabled = localStorage.getItem("keterangan_enabled") === "true";
+  const wrapperKet = document.getElementById("wrapper-keterangan");
+  const thKet = document.getElementById("th-keterangan");
+
+  if (wrapperKet) {
+    wrapperKet.style.display = isKetEnabled ? "block" : "none";
+  }
+  if (thKet) {
+    thKet.style.display = isKetEnabled ? "" : "none";
   }
 }
 

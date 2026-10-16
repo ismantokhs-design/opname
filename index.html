@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=22">
+  <link rel="stylesheet" href="css/style.css?v=23">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -112,7 +112,7 @@
         </div>
 
         <!-- NAMA BARANG & QTY SEJAJAR -->
-        <div style="display: flex; gap: 6px; margin-bottom: 0;">
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
           <div class="form-group" style="flex: 1; position: relative; margin-bottom: 0;">
             <label>NAMA BARANG</label>
             <div style="display: flex; gap: 4px; align-items: center;">
@@ -130,7 +130,6 @@
           <div class="form-group" style="width: 110px; margin-bottom: 0;">
             <label>QTY</label>
             <div style="display: flex; gap: 3px; align-items: center;">
-              <!-- DIPERBAIKI: type diubah ke text agar inputmode="none" tidak diabaikan browser -->
               <input type="text" id="qty" class="input-control" value="1" autocomplete="off" inputmode="none" onkeydown="handleQtyKeydown(event)" style="flex: 1; min-width: 0; text-align: center; padding: 6px 4px;">
               
               <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()" title="Simpan Entry" style="width: 29px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -148,6 +147,12 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <!-- KOLOM KETERANGAN DENGAN ON/OFF PENGATURAN -->
+        <div id="wrapper-keterangan" class="form-group" style="display: none; margin-bottom: 0; margin-top: 4px;">
+          <label>KETERANGAN (KONDISI BARANG)</label>
+          <input type="text" id="keterangan" class="input-control" autocomplete="off" placeholder="Misal: Rusak, Patah, Expired..." onkeydown="handleKeteranganKeydown(event)">
         </div>
       </div>
 
@@ -167,6 +172,7 @@
                 <th>Barcode</th>
                 <th>Nama</th>
                 <th>QTY</th>
+                <th id="th-keterangan" style="display: none;">Ket</th>
                 <th style="text-align: right;">Aksi</th>
               </tr>
             </thead>
@@ -213,6 +219,19 @@
             </p>
           </div>
           <input type="checkbox" id="toggle-mode-pdt" onchange="simpanPengaturanPDT()" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+        </div>
+      </div>
+
+      <!-- SAKELAR BARU: MUNCULKAN KOLOM KETERANGAN -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 style="font-size: 0.8rem; font-weight: 600;">Tampilkan Kolom Keterangan</h3>
+            <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">
+              Input kondisi barang (Rusak, Patah, Expired, dll) di bawah Nama Barang
+            </p>
+          </div>
+          <input type="checkbox" id="toggle-keterangan" onchange="simpanPengaturanKeterangan()" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
         </div>
       </div>
 
@@ -287,6 +306,7 @@
               <th>Barcode</th>
               <th>Nama Barang</th>
               <th>QTY</th>
+              <th>Ket</th>
             </tr>
           </thead>
           <tbody id="tabel-detail-lks-body"></tbody>
@@ -371,9 +391,9 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=22"></script>
-  <script src="js/laporan.js?v=22"></script>
-  <script src="js/pengaturan.js?v=22"></script>
+  <script src="js/scan.js?v=23"></script>
+  <script src="js/laporan.js?v=23"></script>
+  <script src="js/pengaturan.js?v=23"></script>
   
   <script>
     function switchNav(viewId, title) {
@@ -388,6 +408,7 @@
       if (viewId === 'scan') {
         topBar.classList.add('hide-on-scan');
         terapkanModePDT();
+        terapkanTampilanKeterangan();
         if (typeof fokuskanInputUtama === "function") {
           fokuskanInputUtama();
         }
