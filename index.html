@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=12">
+  <link rel="stylesheet" href="css/style.css?v=14">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -20,7 +20,7 @@
 <body>
 
   <!-- Top App Bar -->
-  <div class="top-bar">
+  <div class="top-bar" id="main-top-bar">
     <h1 id="page-title">Beranda</h1>
     <div class="badge-status">
       <span class="status-dot"></span>
@@ -88,7 +88,7 @@
 
     <!-- 3. VIEW SCAN DATA -->
     <div id="view-scan" class="view">
-      <div class="card">
+      <div class="card" style="margin-top: 0;">
         <input type="hidden" id="edit-id-so" value="">
 
         <div class="form-group">
@@ -349,12 +349,12 @@
     </div>
   </div>
 
-  <!-- Import Modul JavaScript -->
+  <!-- Import Modul JavaScript versi v=14 -->
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=12"></script>
-  <script src="js/laporan.js"></script>
+  <script src="js/scan.js?v=14"></script>
+  <script src="js/laporan.js?v=14"></script>
   <script src="js/pengaturan.js"></script>
   
   <script>
@@ -363,7 +363,17 @@
       document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
       document.getElementById(`view-${viewId}`).classList.add('active');
-      document.getElementById('page-title').innerText = title;
+      
+      const topBar = document.getElementById('main-top-bar');
+      const pageTitle = document.getElementById('page-title');
+
+      // Sembunyikan header jika di halaman Scan
+      if (viewId === 'scan') {
+        topBar.classList.add('hide-on-scan');
+      } else {
+        topBar.classList.remove('hide-on-scan');
+        pageTitle.innerText = title;
+      }
 
       const navIndex = ['beranda', 'master', 'scan', 'laporan', 'pengaturan'].indexOf(viewId);
       if (navIndex !== -1) {
