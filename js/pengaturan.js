@@ -28,19 +28,22 @@ function simpanPengaturanPDT() {
   }
 }
 
-// Mengatur atribut inputmode pada elemen scan secara dinamis
+// Mengatur atribut inputmode pada elemen scan (LOKASI, BARCODE, QTY) secara dinamis
 function terapkanModePDT() {
   const isPDTMode = localStorage.getItem("pdt_mode_enabled") === "true";
   
   const barcodeInput = document.getElementById("barcode");
   const lksInput = document.getElementById("lks");
+  const qtyInput = document.getElementById("qty");
 
   if (isPDTMode) {
     if (barcodeInput) barcodeInput.setAttribute("inputmode", "none");
     if (lksInput) lksInput.setAttribute("inputmode", "none");
+    if (qtyInput) qtyInput.setAttribute("inputmode", "none");
   } else {
     if (barcodeInput) barcodeInput.removeAttribute("inputmode");
     if (lksInput) lksInput.removeAttribute("inputmode");
+    if (qtyInput) qtyInput.removeAttribute("inputmode");
   }
 }
 
