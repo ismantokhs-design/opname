@@ -102,11 +102,11 @@ function importFileManual(event) {
   reader.readAsText(file);
 }
 
-// Auto Sync master.json
+// Auto Sync master.json (Hanya berjalan jika tombol diklik manual)
 function loadMasterFromJSONFile() {
   fetch("master.json")
     .then(res => {
-      if (!res.ok) throw new Error("File master.json tidak ditemukan!");
+      if (!res.ok) throw new Error("File master.json tidak ditemukan di folder server!");
       return res.json();
     })
     .then(data => {

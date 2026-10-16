@@ -1,4 +1,5 @@
 let html5QrScannerInstance = null;
+let isReadyToSaveQty = false; // Flag khusus penahan Enter otomatis dari laser
 
 document.addEventListener("DOMContentLoaded", () => {
   const lksInput = document.getElementById("lks");
@@ -190,13 +191,7 @@ function pilihBarangDariNama(barcode, namaBarang) {
   playBeep();
   kunciInputNama();
 
-  const qtyInput = document.getElementById("qty");
-  if (qtyInput) {
-    setTimeout(() => {
-      qtyInput.focus();
-      qtyInput.select();
-    }, 50);
-  }
+  pindahKeQtyDanBlok();
 }
 
 function simpanLokasiLKS() {
@@ -293,7 +288,7 @@ function renderScanUI() {
   };
 }
 
-// LOGIKA PENTING: BERHENTI DI QTY DENGAN ANGKA 1 TERBLOCK
+// LOGIKA PENCARIAN & PEMINDAHAN KE QTY DENGAN NGAHN
 function cariBarangOtomatis() {
   const barcodeInput = document.getElementById("barcode");
   if (!barcodeInput) return;
@@ -309,24 +304,41 @@ function cariBarangOtomatis() {
     if (req.result) {
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
-
-      // Pindahkan kursor ke QTY & sorot angka "1"
-      const qtyInput = document.getElementById("qty");
-      if (qtyInput) {
-        setTimeout(() => {
-          qtyInput.focus();
-          qtyInput.select(); // Blok angka 1 agar siap di-edit atau langsung di-Enter
-        }, 50);
-      }
+      pindahKeQtyDanBlok();
     } else {
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
     }
   };
 }
 
+// PERBAIKAN UTAMA: Pindah ke QTY dan kunci simpan otomatis selama 300ms
+function pindahKeQtyDanBlok() {
+  const qtyInput = document.getElementById("qty");
+  if (!qtyInput) return;
+
+  isReadyToSaveQty = false; // Kunci agar Enter dari laser diabaikan
+
+  setTimeout(() => {
+    qtyInput.focus();
+    qtyInput.select(); // Blok angka 1
+    
+    // Beri jeda 300ms agar sinyal Enter bawaan laser selesai/berakhir dulu
+    setTimeout(() => {
+      isReadyToSaveQty = true; // Sekarang baru siap menerima Enter manual pengguna
+    }, 300);
+  }, 100);
+}
+
+// PENANGANAN TOMBOL ENTER DI QTY
 function handleQtyKeydown(event) {
   if (event.key === "Enter") {
     event.preventDefault();
+
+    // Jika sinyal Enter berasal dari sisa tembakan laser (kurang dari 300ms), ABAIKAN
+    if (!isReadyToSaveQty) {
+      return;
+    }
+
     simpanInputSO();
   }
 }
@@ -405,14 +417,7 @@ function persiapkanEditSO(id) {
           </svg>`;
       }
 
-      const qtyInput = document.getElementById("qty");
-      if (qtyInput) {
-        setTimeout(() => {
-          qtyInput.focus();
-          qtyInput.select();
-        }, 50);
-      }
-
+      pindahKeQtyDanBlok();
       showToast("Mode Edit: Silakan sesuaikan QTY", "success");
     }
   };
@@ -479,6 +484,7 @@ function resetFormScan() {
   document.getElementById("barcode").value = "";
   document.getElementById("nama_barang").value = "";
   document.getElementById("qty").value = "1";
+  isReadyToSaveQty = false;
   kunciInputNama();
 
   const btnSimpan = document.getElementById("btn-simpan-entry");
@@ -613,14 +619,6 @@ function mulaikanScanner() {
 
         cariBarangOtomatis();
         showToast("Barcode terbaca: " + decodedText, "success");
-
-        setTimeout(() => {
-          const qtyInput = document.getElementById("qty");
-          if (qtyInput) {
-            qtyInput.focus();
-            qtyInput.select();
-          }
-        }, 150);
       },
       (errorMessage) => {
         // Abaikan error per-frame
