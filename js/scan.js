@@ -14,10 +14,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (barcodeInput) {
     barcodeInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
+      if (e.key === "Enter" || e.keyCode === 13) {
         e.preventDefault();
         cariBarangOtomatis();
       }
+    });
+
+    // Pengaman tambahan untuk ketik manual di HP (mengantisipasi tombol Go / Search pada keyboard virtual)
+    barcodeInput.addEventListener("search", () => {
+      cariBarangOtomatis();
     });
   }
 
@@ -98,7 +103,7 @@ function cekLokasiDiLaporan() {
 }
 
 function handleLksKeydown(event) {
-  if (event.key === "Enter") {
+  if (event.key === "Enter" || event.keyCode === 13) {
     event.preventDefault();
     const barcodeInput = document.getElementById("barcode");
     if (barcodeInput) {
@@ -295,7 +300,7 @@ function cariBarangOtomatis() {
       playBeep();
       arahkanFokusSetelahScan();
     } else {
-      // Peringatan tegas muncul di HP jika barcode tidak terdaftar
+      // Peringatan tegas muncul di HP jika barcode tidak terdaftar (baik dari scanner maupun ketik manual)
       alert("⚠️ PERHATIAN: Barcode [" + barcode + "] TIDAK ADA di Master Data!");
       
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
@@ -322,7 +327,7 @@ function arahkanFokusSetelahScan() {
 }
 
 function handleKeteranganKeydown(event) {
-  if (event.key === "Enter") {
+  if (event.key === "Enter" || event.keyCode === 13) {
     event.preventDefault();
     pindahKeQtyDanBlok();
   }
@@ -344,7 +349,7 @@ function pindahKeQtyDanBlok() {
 }
 
 function handleQtyKeydown(event) {
-  if (event.key === "Enter") {
+  if (event.key === "Enter" || event.keyCode === 13) {
     event.preventDefault();
     if (!isReadyToSaveQty) return;
     simpanInputSO();
