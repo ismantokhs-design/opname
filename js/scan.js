@@ -4,6 +4,14 @@ let isReadyToSaveQty = false;
 document.addEventListener("DOMContentLoaded", () => {
   const lksInput = document.getElementById("lks");
   const barcodeInput = document.getElementById("barcode");
+  const qtyInput = document.getElementById("qty");
+
+  // Kunci QTY di awal saat halaman dimuat
+  if (qtyInput) {
+    qtyInput.disabled = true;
+    qtyInput.style.background = "#f8fafc";
+    qtyInput.style.color = "var(--text-muted)";
+  }
 
   if (lksInput) {
     lksInput.value = "";
@@ -13,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (barcodeInput) {
-    // Tombol Enter pada keyboard HP (Gboard) bertindak sebagai eksekusi pencarian
     barcodeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.keyCode === 13) {
         e.preventDefault();
@@ -182,6 +189,13 @@ function pilihBarangDariNama(barcode, namaBarang) {
   document.getElementById("barcode").value = barcode;
   document.getElementById("nama_barang").value = namaBarang;
   
+  const qtyInput = document.getElementById("qty");
+  if (qtyInput) {
+    qtyInput.disabled = false;
+    qtyInput.style.background = "#ffffff";
+    qtyInput.style.color = "var(--text-main)";
+  }
+
   playBeep();
   kunciInputNama();
   arahkanFokusSetelahScan();
@@ -285,6 +299,8 @@ function renderScanUI() {
 
 function cariBarangOtomatis() {
   const barcodeInput = document.getElementById("barcode");
+  const qtyInput = document.getElementById("qty");
+
   if (!barcodeInput) return;
   
   const barcode = barcodeInput.value.trim();
@@ -296,24 +312,37 @@ function cariBarangOtomatis() {
 
   req.onsuccess = () => {
     if (req.result) {
-      // JIKA BARANG ADA: Tampilkan nama, lalu lanjut ke QTY
+      // JIKA BARANG KETEMU: Aktifkan QTY, masukkan nama, lalu pindah fokus
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
+      
+      if (qtyInput) {
+        qtyInput.disabled = false;
+        qtyInput.style.background = "#ffffff";
+        qtyInput.style.color = "var(--text-main)";
+      }
+
       arahkanFokusSetelahScan();
     } else {
-      // JIKA BARANG TIDAK ADA: Munculkan peringatan, kosongkan, dan KUNCI kursor di barcode
+      // JIKA BARANG TIDAK KETEMU: Kunci tetap QTY, berikan peringatan, tetap di barcode
       alert("⚠️ PERHATIAN: Barcode [" + barcode + "] TIDAK ADA di Master Data!");
       
       const namaField = document.getElementById("nama_barang");
       namaField.value = "Barang Tidak Ditemukan!";
       
+      if (qtyInput) {
+        qtyInput.disabled = true;
+        qtyInput.style.background = "#f8fafc";
+        qtyInput.style.color = "var(--text-muted)";
+      }
+
       barcodeInput.value = "";
       setTimeout(() => {
         barcodeInput.focus();
         barcodeInput.select();
       }, 50);
       
-      return; // Berhenti mutlak, tidak boleh lolos ke QTY!
+      return; // Berhenti total, tidak boleh lanjut ke QTY!
     }
   };
 
@@ -347,7 +376,7 @@ function handleKeteranganKeydown(event) {
 
 function pindahKeQtyDanBlok() {
   const qtyInput = document.getElementById("qty");
-  if (!qtyInput) return;
+  if (!qtyInput || qtyInput.disabled) return;
 
   isReadyToSaveQty = false;
 
@@ -363,6 +392,8 @@ function pindahKeQtyDanBlok() {
 function handleQtyKeydown(event) {
   if (event.key === "Enter" || event.keyCode === 13) {
     event.preventDefault();
+    const qtyInput = document.getElementById("qty");
+    if (!qtyInput || qtyInput.disabled) return;
     if (!isReadyToSaveQty) return;
     simpanInputSO();
   }
@@ -435,7 +466,13 @@ function persiapkanEditSO(id) {
       document.getElementById("edit-id-so").value = item.id;
       document.getElementById("barcode").value = item.barcode;
       document.getElementById("nama_barang").value = item.nama_barang;
-      document.getElementById("qty").value = item.qty;
+      
+      const qtyInput = document.getElementById("qty");
+      qtyInput.value = item.qty;
+      qtyInput.disabled = false;
+      qtyInput.style.background = "#ffffff";
+      qtyInput.style.color = "var(--text-main)";
+
       if (document.getElementById("keterangan")) {
         document.getElementById("keterangan").value = item.keterangan || "";
       }
@@ -515,7 +552,15 @@ function resetFormScan() {
   document.getElementById("edit-id-so").value = "";
   document.getElementById("barcode").value = "";
   document.getElementById("nama_barang").value = "";
-  document.getElementById("qty").value = "1";
+  
+  const qtyInput = document.getElementById("qty");
+  if (qtyInput) {
+    qtyInput.value = "1";
+    qtyInput.disabled = true;
+    qtyInput.style.background = "#f8fafc";
+    qtyInput.style.color = "var(--text-muted)";
+  }
+
   if (document.getElementById("keterangan")) {
     document.getElementById("keterangan").value = "";
   }

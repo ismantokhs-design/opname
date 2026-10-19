@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=40">
+  <link rel="stylesheet" href="css/style.css?v=41">
   
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
@@ -104,7 +104,6 @@
             <div style="display: flex; gap: 4px; align-items: center;">
               <input type="text" id="barcode" class="input-control" autocomplete="off" placeholder="Scan / ketik barcode..." style="flex: 1;">
               
-              <!-- TOMBOL CARI MANUAL KHUSUS DI LAYAR -->
               <button type="button" id="btn-manual-cari" onclick="cariBarangOtomatis()" style="width: 32px; height: 29px; background: #059669 !important; color: white !important; border: none; border-radius: 6px; display: flex !important; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;" title="Cari Barcode">
                 <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
                   <circle cx="11" cy="11" r="8"/>
@@ -140,7 +139,8 @@
           <div class="form-group" style="width: 110px; margin-bottom: 0;">
             <label>QTY</label>
             <div style="display: flex; gap: 3px; align-items: center;">
-              <input type="text" id="qty" class="input-control" value="1" autocomplete="off" inputmode="numeric" onkeydown="handleQtyKeydown(event)" style="flex: 1; min-width: 0; text-align: center; padding: 6px 4px;">
+              <!-- QTY DIKUNCI (DISABLED) SECARA DEFAULT -->
+              <input type="text" id="qty" class="input-control" value="1" autocomplete="off" inputmode="numeric" disabled onkeydown="handleQtyKeydown(event)" style="flex: 1; min-width: 0; text-align: center; padding: 6px 4px; background: #f8fafc; color: var(--text-muted);">
               
               <button class="btn" id="btn-simpan-entry" onclick="simpanInputSO()" title="Simpan Entry" style="width: 29px; height: 29px; padding: 0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                 <svg style="width: 15px; height: 15px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2.5">
@@ -400,9 +400,9 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=40"></script>
-  <script src="js/laporan.js?v=40"></script>
-  <script src="js/pengaturan.js?v=40"></script>
+  <script src="js/scan.js?v=41"></script>
+  <script src="js/laporan.js?v=41"></script>
+  <script src="js/pengaturan.js?v=41"></script>
   
   <script>
     function switchNav(viewId, title) {
