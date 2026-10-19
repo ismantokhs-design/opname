@@ -295,25 +295,22 @@ function cariBarangOtomatis() {
 
   req.onsuccess = () => {
     if (req.result) {
-      // JIKA BARANG DITEMUKAN
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
-      arahkanFokusSetelahScan(); // Pindah ke QTY
+      arahkanFokusSetelahScan();
     } else {
-      // JIKA BARANG TIDAK DITEMUKAN / KOSONG (DIKUNCI DI SINI)
       alert("⚠️ PERHATIAN: Barcode [" + barcode + "] TIDAK ADA di Master Data!");
       
       const namaField = document.getElementById("nama_barang");
       namaField.value = "Barang Tidak Ditemukan!";
       
-      // Kosongkan dan paksa kursor TETAP di kolom barcode
       barcodeInput.value = "";
       setTimeout(() => {
         barcodeInput.focus();
         barcodeInput.select();
       }, 50);
       
-      return; // Hentikan eksekusi total agar tidak lanjut ke QTY!
+      return;
     }
   };
 
