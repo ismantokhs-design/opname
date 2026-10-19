@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=27">
+  <link rel="stylesheet" href="css/style.css?v=28">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -90,12 +90,16 @@
       <div class="card" style="margin-top: 0;">
         <input type="hidden" id="edit-id-so" value="">
 
-        <!-- KOTAK KAMERA INLINE DENGAN TOMBOL KONTROL MANUAL -->
+        <!-- KOTAK KAMERA INLINE DENGAN TOMBOL CAPTURE MANUAL -->
         <div id="inline-camera-container" style="display: none; margin-bottom: 10px; background: #000; border-radius: 6px; overflow: hidden; position: relative;">
           <div id="interactive" style="width: 100%; aspect-ratio: 16/9;"></div>
+          <!-- Tombol Aksi di Atas Kamera -->
           <div style="position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; z-index: 10;">
-            <button type="button" id="btn-toggle-scan" onclick="toggleMulaiScanKamera()" style="background: #059669; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; font-weight: 600;">Mulai Scan</button>
-            <button type="button" onclick="tutupKameraScan()" style="background: #dc2626; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer;">Tutup</button>
+            <button type="button" onclick="tutupKameraScan()" style="background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer;">Tutup</button>
+          </div>
+          <!-- Tombol Shutter / Capture di Bawah Kamera -->
+          <div style="position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; z-index: 10;">
+            <button type="button" onclick="captureScanKamera()" style="background: #059669; color: white; border: none; border-radius: 20px; padding: 6px 18px; font-size: 0.75rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">📸 Ambil Scan</button>
           </div>
         </div>
 
@@ -382,7 +386,7 @@
     </div>
 
     <div class="nav-item" onclick="switchNav('pengaturan', 'Pengaturan')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Pengaturan</span>
     </div>
   </div>
@@ -390,9 +394,9 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=27"></script>
-  <script src="js/laporan.js?v=27"></script>
-  <script src="js/pengaturan.js?v=27"></script>
+  <script src="js/scan.js?v=28"></script>
+  <script src="js/laporan.js?v=28"></script>
+  <script src="js/pengaturan.js?v=28"></script>
   
   <script>
     function switchNav(viewId, title) {

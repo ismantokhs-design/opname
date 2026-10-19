@@ -1,5 +1,4 @@
 let html5QrScannerInstance = null;
-let isScanningActive = false; // Status apakah tombol "Mulai Scan" sedang aktif
 let isReadyToSaveQty = false;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -303,7 +302,6 @@ function cariBarangOtomatis() {
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
       showToast("Barang tidak ditemukan di Master Data!", "error");
       
-      // Jika dari kamera dan barang tidak ada, bersihkan barcode agar siap scan lagi
       document.getElementById("barcode").value = "";
       setTimeout(() => {
         document.getElementById("barcode").focus();
@@ -594,7 +592,7 @@ function showCustomConfirm(options) {
   };
 }
 
-// BUKA KOTAK KAMERA (BELUM SCAN SEBELUM TOMBOL MULAI DIKLIK)
+// BUKA KAMERA SECARA INLINE (AKTIF MENAMPILKAN VIDEO, TAPI TIDAK AUTO-SCAN)
 function bukaKameraScan() {
   const lks = document.getElementById("lks").value.trim();
   if (!lks) {
@@ -605,56 +603,48 @@ function bukaKameraScan() {
   if (container) {
     container.style.display = "block";
   }
-}
 
-// TOMBOL KONTROL MANUAL: MULAI SCAN / STOP SCAN
-function toggleMulaiScanKamera() {
-  const btnToggle = document.getElementById("btn-toggle-scan");
-  
-  if (!isScanningActive) {
-    // AKTIFKAN SCANNER
-    isScanningActive = true;
-    if (btnToggle) {
-      btnToggle.innerText = "Stop Scan";
-      btnToggle.style.background = "#dc2626";
-    }
+  if (html5QrScannerInstance) return;
 
-    try {
-      html5QrScannerInstance = new Html5Qrcode("interactive");
-      html5QrScannerInstance.start(
-        { facingMode: "environment" },
-        { fps: 15, qrbox: { width: 220, height: 90 } },
-        (decodedText) => {
-          if (!isScanningActive) return;
-
-          // JEDA ATAU SET BARCODE
-          document.getElementById("barcode").value = decodedText;
-          playBeep();
-
-          cariBarangOtomatis();
-        },
-        (errorMessage) => {}
-      ).catch(err => {
-        console.error("Kamera error:", err);
-        showToast("Gagal mengakses kamera!", "error");
-        stopScanKameraSaja();
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  } else {
-    // MATIKAN SCANNER
-    stopScanKameraSaja();
+  try {
+    html5QrScannerInstance = new Html5Qrcode("interactive");
+    html5QrScannerInstance.start(
+      { facingMode: "environment" },
+      { fps: 15, qrbox: { width: 220, height: 90 } },
+      (decodedText) => {
+        // HANYA MENYIMPAN SEMENTARA KE VARIABEL KAPTUR, TIDAK MENJALANKAN SCAN OTOMATIS
+        window.latestScannedCode = decodedText;
+      },
+      (errorMessage) => {}
+    ).catch(err => {
+      console.error("Kamera error:", err);
+      showToast("Gagal mengakses kamera!", "error");
+      tutupKameraScan();
+    });
+  } catch (err) {
+    console.error(err);
   }
 }
 
-function stopScanKameraSaja() {
-  isScanningActive = false;
-  const btnToggle = document.getElementById("btn-toggle-scan");
-  if (btnToggle) {
-    btnToggle.innerText = "Mulai Scan";
-    btnToggle.style.background = "#059669";
+// FUNGSI SAAT TOMBOL "AMBIL SCAN" DIKLIK MANUAL
+function captureScanKamera() {
+  const code = window.latestScannedCode;
+  if (!code) {
+    return showToast("Arahkan kamera ke barcode lalu klik Ambil Scan!", "error");
   }
+
+  document.getElementById("barcode").value = code;
+  playBeep();
+  cariBarangOtomatis();
+}
+
+function tutupKameraScan() {
+  const container = document.getElementById("inline-camera-container");
+  if (container) {
+    container.style.display = "none";
+  }
+
+  window.latestScannedCode = null;
 
   if (html5QrScannerInstance) {
     html5QrScannerInstance.stop().then(() => {
@@ -662,13 +652,5 @@ function stopScanKameraSaja() {
     }).catch(() => {
       html5QrScannerInstance = null;
     });
-  }
-}
-
-function tutupKameraScan() {
-  stopScanKameraSaja();
-  const container = document.getElementById("inline-camera-container");
-  if (container) {
-    container.style.display = "none";
   }
 }
