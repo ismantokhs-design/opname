@@ -12,7 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Pencocokan data HANYA berjalan saat tombol Enter ditekan pada kolom Barcode
   if (barcodeInput) {
     barcodeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -336,12 +335,12 @@ function pindahKeQtyDanBlok() {
 
   setTimeout(() => {
     qtyInput.focus();
-    qtyInput.select();
+    qtyInput.select(); // Memastikan teks QTY langsung ter-highlight/blok penuh
+    qtyInput.setSelectionRange(0, qtyInput.value.length);
     
-    setTimeout(() => {
-      isReadyToSaveQty = true;
-    }, 300);
-  }, 100);
+    // Langsung aktifkan izin simpan dengan Enter
+    isReadyToSaveQty = true;
+  }, 50);
 }
 
 function handleQtyKeydown(event) {
