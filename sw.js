@@ -1,6 +1,6 @@
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open('opname-v27').then((cache) => {
+    caches.open('opname-v28').then((cache) => {
       return cache.addAll([
         '/',
         '/index.html',

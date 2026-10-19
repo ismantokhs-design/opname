@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=28">
+  <link rel="stylesheet" href="css/style.css?v=29">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -90,16 +90,11 @@
       <div class="card" style="margin-top: 0;">
         <input type="hidden" id="edit-id-so" value="">
 
-        <!-- KOTAK KAMERA INLINE DENGAN TOMBOL CAPTURE MANUAL -->
+        <!-- KOTAK KAMERA INLINE -->
         <div id="inline-camera-container" style="display: none; margin-bottom: 10px; background: #000; border-radius: 6px; overflow: hidden; position: relative;">
           <div id="interactive" style="width: 100%; aspect-ratio: 16/9;"></div>
-          <!-- Tombol Aksi di Atas Kamera -->
-          <div style="position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; z-index: 10;">
+          <div style="position: absolute; top: 6px; right: 6px; z-index: 10;">
             <button type="button" onclick="tutupKameraScan()" style="background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer;">Tutup</button>
-          </div>
-          <!-- Tombol Shutter / Capture di Bawah Kamera -->
-          <div style="position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; z-index: 10;">
-            <button type="button" onclick="captureScanKamera()" style="background: #059669; color: white; border: none; border-radius: 20px; padding: 6px 18px; font-size: 0.75rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">📸 Ambil Scan</button>
           </div>
         </div>
 
@@ -373,11 +368,15 @@
       <span>Master</span>
     </div>
 
-    <div class="nav-item fab-item" onclick="switchNav('scan', 'Scan Data')">
-      <div class="fab-button">
-        <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg>
+    <!-- TOMBOL SCAN DI TENGAH NAVIGASI BAWAH BERFUNGSI SEBAGAI TOMBOL AMBIL SCAN -->
+    <div class="nav-item fab-item" onclick="handleBottomNavScanClick()">
+      <div class="fab-button" style="background: #059669;" title="Ambil Scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
       </div>
-      <span>Scan</span>
+      <span>Ambil Scan</span>
     </div>
 
     <div class="nav-item" onclick="switchNav('laporan', 'Laporan')">
@@ -394,9 +393,9 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=28"></script>
-  <script src="js/laporan.js?v=28"></script>
-  <script src="js/pengaturan.js?v=28"></script>
+  <script src="js/scan.js?v=29"></script>
+  <script src="js/laporan.js?v=29"></script>
+  <script src="js/pengaturan.js?v=29"></script>
   
   <script>
     function switchNav(viewId, title) {
@@ -426,6 +425,21 @@
       }
 
       refreshUI();
+    }
+
+    // Fungsi khusus untuk menangani klik tombol tengah bawah di nav
+    function handleBottomNavScanClick() {
+      const viewScanActive = document.getElementById('view-scan').classList.contains('active');
+      
+      if (!viewScanActive) {
+        // Jika sedang di luar halaman scan, pindah dulu ke halaman scan
+        switchNav('scan', 'Scan Data');
+      } else {
+        // Jika sudah di halaman scan, langsung jalankan fungsi ambil scan kamera
+        if (typeof captureScanKamera === "function") {
+          captureScanKamera();
+        }
+      }
     }
 
     if ('serviceWorker' in navigator) {

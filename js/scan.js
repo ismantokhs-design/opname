@@ -592,7 +592,6 @@ function showCustomConfirm(options) {
   };
 }
 
-// BUKA KAMERA SECARA INLINE (AKTIF MENAMPILKAN VIDEO, TAPI TIDAK AUTO-SCAN)
 function bukaKameraScan() {
   const lks = document.getElementById("lks").value.trim();
   if (!lks) {
@@ -612,7 +611,6 @@ function bukaKameraScan() {
       { facingMode: "environment" },
       { fps: 15, qrbox: { width: 220, height: 90 } },
       (decodedText) => {
-        // HANYA MENYIMPAN SEMENTARA KE VARIABEL KAPTUR, TIDAK MENJALANKAN SCAN OTOMATIS
         window.latestScannedCode = decodedText;
       },
       (errorMessage) => {}
@@ -626,11 +624,10 @@ function bukaKameraScan() {
   }
 }
 
-// FUNGSI SAAT TOMBOL "AMBIL SCAN" DIKLIK MANUAL
 function captureScanKamera() {
   const code = window.latestScannedCode;
   if (!code) {
-    return showToast("Arahkan kamera ke barcode lalu klik Ambil Scan!", "error");
+    return showToast("Arahkan kamera ke barcode lalu klik Ambil Scan di bawah!", "error");
   }
 
   document.getElementById("barcode").value = code;
