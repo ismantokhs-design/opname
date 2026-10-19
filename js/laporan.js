@@ -50,6 +50,9 @@ function renderLaporanUI() {
           <td><b>${row.totalQty}</b> Pcs</td>
           <td style="text-align: right;">
             <div class="action-btn-group" style="justify-content: flex-end;">
+              <button class="btn-icon" title="Edit Lokasi Ini" onclick="editLokasiDariLaporan('${row.lks}')" style="background: #fef3c7; color: #d97706;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
               <button class="btn-icon" title="Lihat Detail & Export" onclick="lihatDetailLKS('${row.lks}')" style="background: #e0f2fe; color: #0284c7;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
@@ -62,6 +65,48 @@ function renderLaporanUI() {
       `;
     }).join('');
   };
+}
+
+// Fungsi Edit Lokasi dari Laporan
+function editLokasiDariLaporan(lksCode) {
+  showCustomConfirm({
+    title: `Edit Lokasi ${lksCode}?`,
+    msg: `Data lokasi ${lksCode} akan ditarik kembali ke form Scan untuk diedit atau ditambah itemnya. Lanjutkan?`,
+    iconType: "save",
+    btnConfirmText: "Ya, Edit",
+    onConfirm: () => {
+      const tx = db.transaction(["input_so"], "readwrite");
+      const store = tx.objectStore("input_so");
+      const req = store.getAll();
+
+      req.onsuccess = () => {
+        const data = req.result || [];
+        data.forEach(item => {
+          const itemLKS = item.lks ? String(item.lks).trim().toUpperCase() : "";
+          if (itemLKS === lksCode && item.status === "saved") {
+            item.status = "active";
+            store.put(item);
+          }
+        });
+
+        tx.oncomplete = () => {
+          showToast(`Lokasi ${lksCode} dibuka kembali untuk diedit!`, "success");
+          // Pindah ke halaman scan dan set input lokasi
+          switchNav("scan", "Scan Data");
+          setTimeout(() => {
+            const lksInput = document.getElementById("lks");
+            if (lksInput) {
+              lksInput.value = lksCode;
+            }
+            refreshUI();
+            if (typeof fokuskanInputUtama === "function") {
+              fokuskanInputUtama();
+            }
+          }, 100);
+        };
+      };
+    }
+  });
 }
 
 function lihatDetailLKS(lksCode) {
@@ -117,7 +162,6 @@ function tutupModalDetailLKS() {
   if (modal) modal.classList.remove("show");
 }
 
-// Export 1 Lokasi Tertentu
 function exportLokasiKeText(lksCode) {
   const tx = db.transaction("input_so", "readonly");
   const store = tx.objectStore("input_so");
@@ -163,7 +207,6 @@ function exportLokasiKeText(lksCode) {
   };
 }
 
-// Export Keseluruhan Semua Lokasi ke 1 File Text
 function exportSemuaLokasiKeText() {
   const tx = db.transaction("input_so", "readonly");
   const store = tx.objectStore("input_so");
