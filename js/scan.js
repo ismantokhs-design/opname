@@ -12,16 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Pencocokan data HANYA berjalan saat tombol Enter ditekan pada kolom Barcode
   if (barcodeInput) {
     barcodeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         cariBarangOtomatis();
       }
-    });
-
-    barcodeInput.addEventListener("input", () => {
-      cariBarangOtomatis();
     });
   }
 
