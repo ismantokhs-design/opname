@@ -291,19 +291,30 @@ function cariBarangOtomatis() {
 
   req.onsuccess = () => {
     if (req.result) {
-      document.getElementById("nama_barang").value = req.result.nama_barang;
+      const namaField = document.getElementById("nama_barang");
+      namaField.value = req.result.nama_barang;
+      namaField.style.color = "var(--text-main)";
       playBeep();
       arahkanFokusSetelahScan();
     } else {
-      document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
+      // Tandai kolom nama barang dengan warna merah dan teks peringatan yang jelas
+      const namaField = document.getElementById("nama_barang");
+      namaField.value = "⚠️ BARANG TIDAK ADA DI MASTER!";
+      namaField.style.color = "#dc2626";
+      namaField.style.fontWeight = "bold";
+
+      // Munculkan dialog pop-up konfirmasi agar petugas pasti tahu dan tidak terlewat
+      alert("PERHATIAN!\n\nBarcode: [" + barcode + "] TIDAK DITEMUKAN di Master Data!\nBarang ini belum terdaftar.");
+
       showToast("Barang tidak ditemukan di Master Data!", "error");
       
-      if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
-        setTimeout(() => {
-          alert("Perhatian: Barcode '" + barcode + "' tidak ditemukan di Master Data!");
-        }, 50);
-      }
-      
+      // Kembalikan warna teks normal dan kosongkan barcode
+      setTimeout(() => {
+        namaField.style.color = "var(--text-muted)";
+        namaField.style.fontWeight = "normal";
+        namaField.value = "";
+      }, 500);
+
       document.getElementById("barcode").value = "";
       setTimeout(() => {
         document.getElementById("barcode").focus();
@@ -365,7 +376,7 @@ function simpanInputSO() {
   const keterangan = document.getElementById("keterangan") ? document.getElementById("keterangan").value.trim() : "";
 
   if (!lks) return showToast("Kode Lokasi belum diisi!", "error");
-  if (!barcode || !qty || nama === "Barang Tidak Ditemukan!") {
+  if (!barcode || !qty || nama.includes("TIDAK ADA")) {
     return showToast("Lengkapi barcode valid dan QTY terlebih dahulu!", "error");
   }
 
@@ -422,7 +433,9 @@ function persiapkanEditSO(id) {
     if (item) {
       document.getElementById("edit-id-so").value = item.id;
       document.getElementById("barcode").value = item.barcode;
-      document.getElementById("nama_barang").value = item.nama_barang;
+      const namaField = document.getElementById("nama_barang");
+      namaField.value = item.nama_barang;
+      namaField.style.color = "var(--text-main)";
       document.getElementById("qty").value = item.qty;
       if (document.getElementById("keterangan")) {
         document.getElementById("keterangan").value = item.keterangan || "";
@@ -502,7 +515,10 @@ function batalInputForm() {
 function resetFormScan() {
   document.getElementById("edit-id-so").value = "";
   document.getElementById("barcode").value = "";
-  document.getElementById("nama_barang").value = "";
+  const namaField = document.getElementById("nama_barang");
+  namaField.value = "";
+  namaField.style.color = "var(--text-muted)";
+  namaField.style.fontWeight = "normal";
   document.getElementById("qty").value = "1";
   if (document.getElementById("keterangan")) {
     document.getElementById("keterangan").value = "";
