@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (barcodeInput) {
+    // Tombol Enter pada keyboard HP (Gboard) bertindak sebagai eksekusi pencarian
     barcodeInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.keyCode === 13) {
         e.preventDefault();
@@ -295,10 +296,12 @@ function cariBarangOtomatis() {
 
   req.onsuccess = () => {
     if (req.result) {
+      // JIKA BARANG ADA: Tampilkan nama, lalu lanjut ke QTY
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
       arahkanFokusSetelahScan();
     } else {
+      // JIKA BARANG TIDAK ADA: Munculkan peringatan, kosongkan, dan KUNCI kursor di barcode
       alert("⚠️ PERHATIAN: Barcode [" + barcode + "] TIDAK ADA di Master Data!");
       
       const namaField = document.getElementById("nama_barang");
@@ -310,7 +313,7 @@ function cariBarangOtomatis() {
         barcodeInput.select();
       }, 50);
       
-      return;
+      return; // Berhenti mutlak, tidak boleh lolos ke QTY!
     }
   };
 
