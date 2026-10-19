@@ -1,5 +1,5 @@
 let html5QrScannerInstance = null;
-let isReadyToSaveQty = false; // Flag khusus penahan Enter otomatis dari laser
+let isReadyToSaveQty = false; // Flag penahan Enter dari laser
 
 document.addEventListener("DOMContentLoaded", () => {
   const lksInput = document.getElementById("lks");
@@ -191,7 +191,7 @@ function pilihBarangDariNama(barcode, namaBarang) {
   playBeep();
   kunciInputNama();
 
-  pindahKeQtyDanBlok();
+  arahkanFokusSetelahScan();
 }
 
 function simpanLokasiLKS() {
@@ -245,6 +245,7 @@ function simpanLokasiLKS() {
 function renderScanUI() {
   if (!db) return;
 
+  const isKetEnabled = localStorage.getItem("keterangan_enabled") === "true";
   const lksInput = document.getElementById("lks");
   const currentLKS = lksInput ? lksInput.value.trim().toUpperCase() : "";
 
@@ -262,8 +263,10 @@ function renderScanUI() {
     const recentTbody = document.getElementById("tabel-scan-recent");
     if (!recentTbody) return;
 
+    const colSpan = isKetEnabled ? 6 : 5;
+
     if (filteredData.length === 0) {
-      recentTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted); padding:12px;">Tabel bersih. Siap untuk scan ${currentLKS || 'Lokasi baru'}.</td></tr>`;
+      recentTbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color: var(--text-muted); padding:12px;">Tabel bersih. Siap untuk scan ${currentLKS || 'Lokasi baru'}.</td></tr>`;
       return;
     }
 
@@ -273,6 +276,7 @@ function renderScanUI() {
         <td><code>${item.barcode}</code></td>
         <td>${item.nama_barang}</td>
         <td><b>${item.qty}</b></td>
+        ${isKetEnabled ? `<td><span style="font-size:0.65rem; color: #d97706; font-weight: 500;">${item.keterangan || '-'}</span></td>` : ''}
         <td>
           <div class="action-btn-group">
             <button class="btn-icon edit" title="Edit QTY" onclick="persiapkanEditSO(${item.id})">
@@ -288,7 +292,6 @@ function renderScanUI() {
   };
 }
 
-// LOGIKA PENCARIAN & PEMINDAHAN KE QTY DENGAN NGAHN
 function cariBarangOtomatis() {
   const barcodeInput = document.getElementById("barcode");
   if (!barcodeInput) return;
@@ -304,37 +307,54 @@ function cariBarangOtomatis() {
     if (req.result) {
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
-      pindahKeQtyDanBlok();
+      arahkanFokusSetelahScan();
     } else {
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
     }
   };
 }
 
-// PERBAIKAN UTAMA: Pindah ke QTY dan kunci simpan otomatis selama 300ms
+function arahkanFokusSetelahScan() {
+  const isKetEnabled = localStorage.getItem("keterangan_enabled") === "true";
+  const ketInput = document.getElementById("keterangan");
+
+  if (isKetEnabled && ketInput) {
+    setTimeout(() => {
+      ketInput.focus();
+      ketInput.select();
+    }, 100);
+  } else {
+    pindahKeQtyDanBlok();
+  }
+}
+
+function handleKeteranganKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    pindahKeQtyDanBlok();
+  }
+}
+
 function pindahKeQtyDanBlok() {
   const qtyInput = document.getElementById("qty");
   if (!qtyInput) return;
 
-  isReadyToSaveQty = false; // Kunci agar Enter dari laser diabaikan
+  isReadyToSaveQty = false;
 
   setTimeout(() => {
     qtyInput.focus();
-    qtyInput.select(); // Blok angka 1
+    qtyInput.select();
     
-    // Beri jeda 300ms agar sinyal Enter bawaan laser selesai/berakhir dulu
     setTimeout(() => {
-      isReadyToSaveQty = true; // Sekarang baru siap menerima Enter manual pengguna
+      isReadyToSaveQty = true;
     }, 300);
   }, 100);
 }
 
-// PENANGANAN TOMBOL ENTER DI QTY
 function handleQtyKeydown(event) {
   if (event.key === "Enter") {
     event.preventDefault();
 
-    // Jika sinyal Enter berasal dari sisa tembakan laser (kurang dari 300ms), ABAIKAN
     if (!isReadyToSaveQty) {
       return;
     }
@@ -349,6 +369,7 @@ function simpanInputSO() {
   const barcode = document.getElementById("barcode").value.trim();
   const nama = document.getElementById("nama_barang").value;
   const qty = parseInt(document.getElementById("qty").value) || 0;
+  const keterangan = document.getElementById("keterangan") ? document.getElementById("keterangan").value.trim() : "";
 
   if (!lks) return showToast("Kode Lokasi belum diisi!", "error");
   if (!barcode || !qty) return showToast("Lengkapi barcode dan QTY terlebih dahulu!", "error");
@@ -365,6 +386,7 @@ function simpanInputSO() {
         item.barcode = barcode;
         item.nama_barang = nama;
         item.qty = qty;
+        item.keterangan = keterangan;
         store.put(item);
       }
     };
@@ -381,6 +403,7 @@ function simpanInputSO() {
       barcode, 
       nama_barang: nama, 
       qty, 
+      keterangan,
       status: "active",
       timestamp: new Date().toISOString() 
     });
@@ -406,6 +429,9 @@ function persiapkanEditSO(id) {
       document.getElementById("barcode").value = item.barcode;
       document.getElementById("nama_barang").value = item.nama_barang;
       document.getElementById("qty").value = item.qty;
+      if (document.getElementById("keterangan")) {
+        document.getElementById("keterangan").value = item.keterangan || "";
+      }
 
       const btnSimpan = document.getElementById("btn-simpan-entry");
       if (btnSimpan) {
@@ -417,8 +443,8 @@ function persiapkanEditSO(id) {
           </svg>`;
       }
 
-      pindahKeQtyDanBlok();
-      showToast("Mode Edit: Silakan sesuaikan QTY", "success");
+      arahkanFokusSetelahScan();
+      showToast("Mode Edit: Silakan sesuaikan data", "success");
     }
   };
 }
@@ -484,6 +510,9 @@ function resetFormScan() {
   document.getElementById("barcode").value = "";
   document.getElementById("nama_barang").value = "";
   document.getElementById("qty").value = "1";
+  if (document.getElementById("keterangan")) {
+    document.getElementById("keterangan").value = "";
+  }
   isReadyToSaveQty = false;
   kunciInputNama();
 
@@ -570,39 +599,23 @@ function showCustomConfirm(options) {
   };
 }
 
+// BUKA KAMERA SECARA INLINE DI ATAS (TIDAK OTOMATIS TERTUTUP SETELAH SCAN)
 function bukaKameraScan() {
   const lks = document.getElementById("lks").value.trim();
   if (!lks) {
     return showToast("Kode Lokasi harus diisi dulu!", "error");
   }
 
-  const modal = document.getElementById("modal-camera");
-  if (modal) modal.classList.add("show");
+  const container = document.getElementById("inline-camera-container");
+  if (container) {
+    container.style.display = "block";
+  }
 
   if (html5QrScannerInstance) {
-    html5QrScannerInstance.stop().then(() => {
-      html5QrScannerInstance = null;
-      bersihkanContainerKamera();
-      mulaikanScanner();
-    }).catch(() => {
-      html5QrScannerInstance = null;
-      bersihkanContainerKamera();
-      mulaikanScanner();
-    });
-  } else {
-    bersihkanContainerKamera();
-    mulaikanScanner();
+    // Jika sudah aktif, biarkan menyala
+    return;
   }
-}
 
-function bersihkanContainerKamera() {
-  const container = document.getElementById("interactive");
-  if (container) {
-    container.innerHTML = "";
-  }
-}
-
-function mulaikanScanner() {
   try {
     html5QrScannerInstance = new Html5Qrcode("interactive");
 
@@ -613,12 +626,12 @@ function mulaikanScanner() {
         qrbox: { width: 220, height: 90 }
       },
       (decodedText) => {
+        // SET BARCODE DAN PROSES OTOMATIS TANPA MENUTUP KAMERA
         document.getElementById("barcode").value = decodedText;
         playBeep();
-        tutupKameraScan();
 
         cariBarangOtomatis();
-        showToast("Barcode terbaca: " + decodedText, "success");
+        showToast("Terbaca: " + decodedText, "success");
       },
       (errorMessage) => {
         // Abaikan error per-frame
@@ -635,19 +648,18 @@ function mulaikanScanner() {
   }
 }
 
+// MENUTUP / MENYEMBUNYIKAN KAMERA INLINE
 function tutupKameraScan() {
-  const modal = document.getElementById("modal-camera");
-  if (modal) modal.classList.remove("show");
+  const container = document.getElementById("inline-camera-container");
+  if (container) {
+    container.style.display = "none";
+  }
 
   if (html5QrScannerInstance) {
     html5QrScannerInstance.stop().then(() => {
       html5QrScannerInstance = null;
-      bersihkanContainerKamera();
     }).catch(() => {
       html5QrScannerInstance = null;
-      bersihkanContainerKamera();
     });
-  } else {
-    bersihkanContainerKamera();
   }
 }
