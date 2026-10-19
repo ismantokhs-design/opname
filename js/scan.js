@@ -295,14 +295,19 @@ function cariBarangOtomatis() {
       playBeep();
       arahkanFokusSetelahScan();
     } else {
-      // Notifikasi halus barang tidak ditemukan dikembalikan
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
       showToast("Barang tidak ditemukan di Master Data!", "error");
+      
+      if (navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
+        setTimeout(() => {
+          alert("Perhatian: Barcode '" + barcode + "' tidak ditemukan di Master Data!");
+        }, 50);
+      }
       
       document.getElementById("barcode").value = "";
       setTimeout(() => {
         document.getElementById("barcode").focus();
-      }, 80);
+      }, 100);
     }
   };
 }
@@ -336,10 +341,9 @@ function pindahKeQtyDanBlok() {
 
   setTimeout(() => {
     qtyInput.focus();
-    qtyInput.select(); // Blok seluruh isi teks QTY agar langsung tertimpa ketikan baru
+    qtyInput.select();
     qtyInput.setSelectionRange(0, qtyInput.value.length);
     
-    // Langsung aktifkan izin simpan
     isReadyToSaveQty = true;
   }, 50);
 }
