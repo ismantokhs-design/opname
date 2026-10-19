@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Opname PWA">
   
-  <link rel="stylesheet" href="css/style.css?v=26">
+  <link rel="stylesheet" href="css/style.css?v=27">
   
   <!-- HTML5 QR & Barcode Scanner Library -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -90,10 +90,13 @@
       <div class="card" style="margin-top: 0;">
         <input type="hidden" id="edit-id-so" value="">
 
-        <!-- KOTAK KAMERA INLINE (MUNCUL PERMANEN DI ATAS JIKA DIKATIFKAN) -->
+        <!-- KOTAK KAMERA INLINE DENGAN TOMBOL KONTROL MANUAL -->
         <div id="inline-camera-container" style="display: none; margin-bottom: 10px; background: #000; border-radius: 6px; overflow: hidden; position: relative;">
           <div id="interactive" style="width: 100%; aspect-ratio: 16/9;"></div>
-          <button type="button" onclick="tutupKameraScan()" style="position: absolute; top: 6px; right: 6px; background: rgba(220, 38, 38, 0.85); color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; z-index: 10;">Tutup Kamera</button>
+          <div style="position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; z-index: 10;">
+            <button type="button" id="btn-toggle-scan" onclick="toggleMulaiScanKamera()" style="background: #059669; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; font-weight: 600;">Mulai Scan</button>
+            <button type="button" onclick="tutupKameraScan()" style="background: #dc2626; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer;">Tutup</button>
+          </div>
         </div>
 
         <!-- LOKASI & BARCODE SEJAJAR -->
@@ -107,7 +110,7 @@
             <label>BARCODE BARANG</label>
             <div style="display: flex; gap: 4px; align-items: center;">
               <input type="text" id="barcode" class="input-control" autocomplete="off" placeholder="Scan / ketik barcode..." style="flex: 1;">
-              <button type="button" id="btn-camera-scan" onclick="bukaKameraScan()" style="width: 32px; height: 29px; background: #2563eb !important; color: white !important; border: none; border-radius: 6px; display: flex !important; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;" title="Buka Kamera Scan Terus-menerus">
+              <button type="button" id="btn-camera-scan" onclick="bukaKameraScan()" style="width: 32px; height: 29px; background: #2563eb !important; color: white !important; border: none; border-radius: 6px; display: flex !important; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;" title="Buka Kamera">
                 <svg style="width: 15px; height: 15px; stroke: white; fill: none;" viewBox="0 0 24 24" stroke-width="2">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                   <circle cx="12" cy="13" r="4"/>
@@ -379,7 +382,7 @@
     </div>
 
     <div class="nav-item" onclick="switchNav('pengaturan', 'Pengaturan')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Pengaturan</span>
     </div>
   </div>
@@ -387,9 +390,9 @@
   <script src="js/db.js"></script>
   <script src="js/beranda.js"></script>
   <script src="js/master.js"></script>
-  <script src="js/scan.js?v=26"></script>
-  <script src="js/laporan.js?v=26"></script>
-  <script src="js/pengaturan.js?v=26"></script>
+  <script src="js/scan.js?v=27"></script>
+  <script src="js/laporan.js?v=27"></script>
+  <script src="js/pengaturan.js?v=27"></script>
   
   <script>
     function switchNav(viewId, title) {
