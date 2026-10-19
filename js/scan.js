@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Pengaman tambahan untuk ketik manual di HP (mengantisipasi tombol Go / Search pada keyboard virtual)
     barcodeInput.addEventListener("search", () => {
       cariBarangOtomatis();
     });
@@ -296,19 +295,32 @@ function cariBarangOtomatis() {
 
   req.onsuccess = () => {
     if (req.result) {
+      // JIKA BARANG DITEMUKAN
       document.getElementById("nama_barang").value = req.result.nama_barang;
       playBeep();
-      arahkanFokusSetelahScan();
+      arahkanFokusSetelahScan(); // Pindah ke QTY
     } else {
-      // Peringatan tegas muncul di HP jika barcode tidak terdaftar (baik dari scanner maupun ketik manual)
+      // JIKA BARANG TIDAK DITEMUKAN / KOSONG (DIKUNCI DI SINI)
       alert("⚠️ PERHATIAN: Barcode [" + barcode + "] TIDAK ADA di Master Data!");
       
-      document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
-      document.getElementById("barcode").value = "";
+      const namaField = document.getElementById("nama_barang");
+      namaField.value = "Barang Tidak Ditemukan!";
+      
+      // Kosongkan dan paksa kursor TETAP di kolom barcode
+      barcodeInput.value = "";
       setTimeout(() => {
-        document.getElementById("barcode").focus();
-      }, 100);
+        barcodeInput.focus();
+        barcodeInput.select();
+      }, 50);
+      
+      return; // Hentikan eksekusi total agar tidak lanjut ke QTY!
     }
+  };
+
+  req.onerror = () => {
+    alert("⚠️ Gagal membaca database master barang!");
+    barcodeInput.value = "";
+    barcodeInput.focus();
   };
 }
 
