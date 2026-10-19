@@ -295,13 +295,14 @@ function cariBarangOtomatis() {
       playBeep();
       arahkanFokusSetelahScan();
     } else {
+      // Notifikasi halus barang tidak ditemukan dikembalikan
       document.getElementById("nama_barang").value = "Barang Tidak Ditemukan!";
       showToast("Barang tidak ditemukan di Master Data!", "error");
       
       document.getElementById("barcode").value = "";
       setTimeout(() => {
         document.getElementById("barcode").focus();
-      }, 100);
+      }, 80);
     }
   };
 }
@@ -314,7 +315,7 @@ function arahkanFokusSetelahScan() {
     setTimeout(() => {
       ketInput.focus();
       ketInput.select();
-    }, 100);
+    }, 50);
   } else {
     pindahKeQtyDanBlok();
   }
@@ -335,10 +336,10 @@ function pindahKeQtyDanBlok() {
 
   setTimeout(() => {
     qtyInput.focus();
-    qtyInput.select(); // Memastikan teks QTY langsung ter-highlight/blok penuh
+    qtyInput.select(); // Blok seluruh isi teks QTY agar langsung tertimpa ketikan baru
     qtyInput.setSelectionRange(0, qtyInput.value.length);
     
-    // Langsung aktifkan izin simpan dengan Enter
+    // Langsung aktifkan izin simpan
     isReadyToSaveQty = true;
   }, 50);
 }
